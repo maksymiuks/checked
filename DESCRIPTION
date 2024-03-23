@@ -1,0 +1,32 @@
+Package: reversecheck
+Title: Systematically Run R Checks Against Reverse Dependencies
+Version: 0.0.0.9000
+Authors@R: 
+    c(
+      person(
+        "S", "M", ,
+        "s.m@example.com", 
+        role = c("aut", "cre"),
+        comment = c(ORCID = "YOUR-ORCID-ID")
+      ),
+      person(
+        "Doug", "Kelkhoff", , 
+        "doug.kelkhoff@gmail.com", 
+        role = c("aut"),
+        comment = c(ORCID = "0009-0003-7845-4061")
+      )
+    )
+Description: 
+    Run R checks against old and new versions of a package to systematically
+    test for any breaking changes imparted on packages which take said package
+    as a dependency (reverse dependencies). Checks are run in parallel with
+    strategies to minimize dependency installation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports:
+	utils (>= 3.6.2),
+	cli,
+	rcmdcheck,
+	R6
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
