@@ -26,6 +26,7 @@ Encoding: UTF-8
 Imports:
 	utils (>= 3.6.2),
 	cli,
+	desc,
 	rcmdcheck,
 	R6
 Roxygen: list(markdown = TRUE)
