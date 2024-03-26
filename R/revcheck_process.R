@@ -23,10 +23,6 @@ revcheck_process <- R6::R6Class(
     checks = function() {
       self$poll_output()
       private$parsed_checks
-    },
-    last_check = function() {
-      self$poll_output()
-      private$parsed_last_check
     }
   ),
   public = list(
@@ -62,19 +58,19 @@ revcheck_process <- R6::R6Class(
       out <- paste0(private$parsed_partial_check_output, super$read_output())
       captures <- checks_capture(out)
       checks <- checks_simplify(captures)
-      last_check <- tail(checks, 1L)  # might be NULL
 
       if (length(checks) > 0) {
         private$time_last_check_start <- Sys.time()
-        private$parsed_last_check <- last_check
+        unknown <- !checks %in% levels(private$parsed_checks)
+        checks[unknown] <- "NONE"
         private$parsed_checks[names(checks)] <- checks
       }
 
-      if (is.null(last_check)) {
+      if (length(private$parsed_checks) == 0) {
         # no checks were parsed
         private$parsed_partial_check_output <- out
-      } else if (identical(last_check, "")) {
-        # the final check was incomplete
+      } else if (identical(tail(checks, 1), "")) {
+        # the most recent output's check is still running
         n <- nrow(captures)
         private$parsed_partial_check_output  <- substring(out, captures[1, n])
       } else {
@@ -85,13 +81,7 @@ revcheck_process <- R6::R6Class(
 
     cli_status_line = function(width = cli::console_width()) {
       self$poll_output()
-      checks <- private$parsed_checks
-      last_check <- private$parsed_last_check
-
-      e <- cli::col_yellow(sprintf("%2.f", sum(checks == "ERROR")))
-      w <- cli::col_magenta(sprintf("%2.f", sum(checks == "WARNING")))
-      n <- cli::col_blue(sprintf("%2.f", sum(checks == "NOTE")))
-      o <- cli::col_none(sprintf("%2.f", sum(checks %in% c("NONE", "OK"))))
+      check_codes <- as.numeric(private$parsed_checks)
 
       # runtime of process
       process_time <- (self$get_time_finish() %||% Sys.time()) - self$get_start_time()
@@ -106,32 +96,31 @@ revcheck_process <- R6::R6Class(
       }
 
       msg <- ""
-      status <- " "
-      if (!length(last_check)) {
+      status <- max(check_codes, -1)
+      if (length(private$parsed_checks) == 0) {
         # have not hit checks yet
         msg <- "starting ..."
         status <- private$spinners[["starting"]]$spin()
-        process_time <- ""
       } else if (self$is_alive()) {
         # processing checks
-        msg <- paste("checking", names(last_check), "...")
+        msg <- paste("checking", names(tail(private$parsed_checks, 1)), "...")
         status <- private$spinners[["check"]]$spin()
         process_time <- cli::col_cyan(process_time)
       } else {
         # done
-        status_enum <- c("NONE", "OK", "NOTE", "WARNING", "ERROR")
-        status_code <- match(checks, status_enum)
-        status <- switch(max(status_code, 0, na.rm = TRUE),
-          "1" = , "2" = cli::col_green("✓"),
-          "3" = cli::col_blue("!"),
-          "4" = cli::col_magenta("?"),
-          "5" = cli::col_yellow("⨯")
-        )
         process_time <- cli::col_grey(process_time)
       }
 
       msg <- cli::format_inline("{process_time}{check_time}{msg}")
-      out <- cli_table_row(status, o, n, w, e, msg)
+      out <- cli_table_row(
+        status = status,
+        ok = sum(check_codes <= 3),
+        notes = sum(check_codes == 4),
+        warnings = sum(check_codes == 5),
+        errors = sum(check_codes == 6),
+        msg
+      )
+
       cli::ansi_substring(out, 1, width)
     }
   ),
@@ -139,9 +128,8 @@ revcheck_process <- R6::R6Class(
     args = list(),
     time_last_check_start = NULL,
     time_finish = NULL,
-    parsed_checks = character(0L),
-    parsed_last_check = character(0L),
-    parsed_partial_check_output = character(0L),
+    parsed_checks = factor(levels = c("", "NONE", "OK", "NOTE", "WARNING", "ERROR")),
+    parsed_partial_check_output = "",
     throttle = NULL,
     spinners = NULL
   )
