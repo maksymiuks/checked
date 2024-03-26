@@ -1,50 +1,50 @@
+#' @export
 reversecheck <- function(pkg = "./",
                          reversecheck_dir = "./reversecheck",
-                         dependencies_dir = file.path(tempdir(), "reversecheck"),
+                         lib.loc = .libPaths(),
                          dependencies = TRUE,
+                         cache = c("preinstall", "standard", "none"),
                          repos = getOption("repos"),
                          dependencies_repos = repos,
                          timeout = as.difftime(60, units = "mins"),
                          sampling = NULL,
                          rcmdcheck_params = reversecheck_deafult_rcmd_params(),
-                         pre_clear = FALSE
+                         pre_clear = FALSE,
+                         cache_type = "source",
+                         cache_filters = NULL,
                          ...) {
   
-  pkg <- check_pkg(pkg)
-  dependencies <- check_dependencies(dependencies)
+  pkg <- check_input_pkg(pkg)
+  dependencies <- check_input_dependencies(dependencies)
+  cache <- match.arg(cache, c("preinstall", "standard", "none"))
   checkmate::assert_class(timeout, "difftime")
   checkmate::assert_function(sampling, null.ok = TRUE)
   checkmate::assert_character(rcmdcheck_params, null.ok = TRUE)
   
-  if (pre_clear) {
-    unlink(get_reversecheck_directory(), recursive = TRUE, force = TRUE)
-  }
+  setup_reversecheck(reversecheck_dir, pre_clear, cache)
   
-  
-  setup_reversecheck(reversecheck_dir, dependencies_dir)
-  
-  state <- reversecheck_initialize(
+  reversecheck_initialize(
     pkg = pkg,
     reversecheck_dir = reversecheck_dir,
+    lib.loc = lib.loc,
     dependencies = dependencies,
+    cache = cache,
     repos = repos,
+    dependencies_repos = dependencies_repos,
     sampling = sampling,
+    cache_type = cache_type,
+    cache_filters = cache_filters,
     ...
   )
-  state <- reversecheck_check(
+  reversecheck_check(
     pkg = pkg,
     reversecheck_dir = reversecheck_dir,
     timeout = timeout,
     rcmdcheck_params = rcmdcheck_params,
     ...
   )
-  state <- reversecheck_report(state)
+  
+  reversecheck_report()
   
   invisible(NULL)
-}
-
-test <- function(...) {
-  cl <- match.call()
-  print(paste0(...))
-  cl
 }
