@@ -1,24 +1,25 @@
-reversecheck_initialize <- function(pkg, 
-                                    reversecheck_dir,
-                                    lib.loc,
-                                    dependencies, 
-                                    cache, 
-                                    repos,
-                                    dependencies_repos,
-                                    sampling,
-                                    cache_type,
-                                    cache_filters) {
+reversecheck_initialize <- function(
+  pkg,
+  reversecheck_dir,
+  lib.loc,
+  dependencies,
+  cache,
+  repos,
+  dependencies_repos,
+  sampling,
+  cache_type,
+  cache_filters
+) {
   was_initialized <- db_was_initialized(reversecheck_dir)
   revdeps <- if (was_initialized) {
     db_get_revdeps(reversecheck_dir)
   } else {
     db_insert_revdeps(
-      get_revdeps(pkg, dependencies, repos, sampling), 
+      get_revdeps(pkg, dependencies, repos, sampling),
       reversecheck_dir
     )
   }
 
-  
   install_pkg(pkg, reversecheck_dir, lib.loc)
   setup_minicran_cache_repo(revdeps, reversecheck_dir, repos, cache_type, cache_filters)
   

@@ -7,7 +7,7 @@
 checks_simplify(x)
 }
 \arguments{
-\item{x}{Matrix of regex captures as produced by [checks_capture].}
+\item{x}{Matrix of regex captures as produced by \link{checks_capture}.}
 }
 \value{
 A vector of check status, with names indicating the check

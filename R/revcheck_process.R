@@ -44,8 +44,17 @@ revcheck_process <- R6::R6Class(
       private$time_last_check_start
     },
 
+    get_duration = function() {
+      (self$get_time_finish() %||% Sys.time()) - self$get_start_time()
+    },
+
     get_time_finish = function() {
       private$time_finish
+    },
+
+    get_status_counts = function() {
+      self$poll_output()
+      table(private$parsed_checks)
     },
 
     poll_output = function() {
@@ -84,8 +93,7 @@ revcheck_process <- R6::R6Class(
       check_codes <- as.numeric(private$parsed_checks)
 
       # runtime of process
-      process_time <- (self$get_time_finish() %||% Sys.time()) - self$get_start_time()
-      process_time <- paste0(format_time(process_time), " ")
+      process_time <- paste0(format_time(self$get_duration()), " ")
 
       # runtime of current check (only displayed if >30s)
       check_time <- Sys.time() - self$get_time_last_check_start()
@@ -112,12 +120,13 @@ revcheck_process <- R6::R6Class(
       }
 
       msg <- cli::format_inline("{process_time}{check_time}{msg}")
+      counts <- self$get_status_counts() 
       out <- cli_table_row(
         status = status,
-        ok = sum(check_codes <= 3),
-        notes = sum(check_codes == 4),
-        warnings = sum(check_codes == 5),
-        errors = sum(check_codes == 6),
+        ok = counts[["NONE"]] + counts[["OK"]],
+        notes = counts[["NOTE"]],
+        warnings = counts[["WARNING"]],
+        errors = counts[["ERROR"]],
         msg
       )
 

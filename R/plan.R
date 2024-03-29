@@ -22,7 +22,6 @@ revcheck_plan <- function(paths, n_parallel = 4) {
     if (is.null(idx_next)) return(FALSE)  # no more to process
     if (idx_next - idx_last_finished > n) return(FALSE)  # saturating n_parallel
     item <- self$queue[[idx_next]]
-    item$reported <- FALSE
     item$process <- do.call(revcheck_process$new, item$args)
     TRUE
   }

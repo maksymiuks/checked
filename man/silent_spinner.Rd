@@ -7,9 +7,9 @@
 silent_spinner(..., stream = devnull())
 }
 \arguments{
-\item{...}{passed to [cli::make_spinner]}
+\item{...}{passed to \link[cli:make_spinner]{cli::make_spinner}}
 
-\item{stream}{passed to [cli::make_spinner], defaults to a null file device}
+\item{stream}{passed to \link[cli:make_spinner]{cli::make_spinner}, defaults to a null file device}
 }
 \value{
 A interface similar to a 'cli' spinner, but with suppressed output

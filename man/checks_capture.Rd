@@ -11,7 +11,7 @@ checks_capture(x)
 }
 \value{
 A matrix of matches and capture groups "check" and "status"
-  ("OK", "NONE", "NOTE", "WARNING" or "ERROR").
+("OK", "NONE", "NOTE", "WARNING" or "ERROR").
 }
 \description{
 Parse R CMD checks from a partial check output string

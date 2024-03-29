@@ -1,3 +1,11 @@
+#' Initialize a Reporter Object
+#'
+#' Reporters are primarily used as a data-less class for dispatch. They are
+#' initialized with an empty environment, which can be used to store
+#' arbitrary state during reporting.
+#'
+#' @noRd
+#' @keywords internal
 reporter <- function(type) {
   type <- paste0("reporter_", type)
   structure(new.env(parent = baseenv()), class = c(type, "reporter"))
@@ -10,9 +18,18 @@ default_reporter <- function() {
     stop("dynamic tty reporter not yet available")
     reporter("dynamic_tty")
   } else {
-    stop("basic reporter not yet available")
-    reporter("basic")
+    reporter("basic_tty")
   }
+}
+
+#' Provide a default sleep period between updates
+report_sleep <- function(reporter, plan, sleep) {
+  UseMethod("report_sleep")
+}
+
+#' @export
+report_sleep.default <- function(reporter, plan, sleep = 1) {
+  Sys.sleep(sleep)
 }
 
 report_initialize <- function(reporter, plan, envir = parent.frame()) {

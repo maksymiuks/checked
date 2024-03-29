@@ -26,14 +26,12 @@ get_reversecheck_cache_repo <- function(reversecheck_dir, repos = FALSE) {
 }
 
 get_reversecheck_lib <- function(reversecheck_dir, lib = c("cache", "new", "old")) {
-  lib = match.arg(lib, c("cache", "new", "old"))
-  
+  lib <- match.arg(lib)
   file.path(reversecheck_dir, "libs", paste0("R_REVERSECHECK_LIB_", toupper(lib)))
 }
 
 get_reversecheck_lib_logs <- function(reversecheck_dir, lib = c("cache", "new", "old")) {
-  lib = match.arg(lib, c("cache", "new", "old"))
-  
+  lib <- match.arg(lib)
   file.path(reversecheck_dir, "libs", "logs", lib)
 }
 

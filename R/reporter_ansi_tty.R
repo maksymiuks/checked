@@ -1,11 +1,24 @@
-report_initialize.reporter_ansi_tty <- function(reporter, plan, envir = parent.frame()) {  # nolint
+#' @export
+report_sleep.reporter_ansi_tty <- function(reporter, plan, sleep = 0.1) {  # nolint
+  Sys.sleep(sleep)
+}
+
+#' @export
+report_initialize.reporter_ansi_tty <- function(  # nolint
+    reporter,
+    plan,
+    envir = parent.frame()) {
   reporter$active <- integer()
   reporter$idx <- 0
   n_char_titles <- max(viapply(plan$queue, function(i) nchar(i$name)))
 
   # hide cursor when initializer enters, ensure its restored even if interrupted
   cli::ansi_hide_cursor()
-  do.call(on.exit, list(quote(cli::ansi_show_cursor()), add = TRUE), envir = envir)
+  do.call(
+    on.exit,
+    list(quote(cli::ansi_show_cursor()), add = TRUE), 
+    envir = envir
+  )
 
   cat(
     strrep(" ", n_char_titles + 2),
@@ -23,7 +36,8 @@ report_initialize.reporter_ansi_tty <- function(reporter, plan, envir = parent.f
   )
 }
 
-report_status.reporter_ansi_tty <- function(reporter, plan) {  # nolint
+#' @export
+report_status.reporter_ansi_tty <- function(reporter, plan) { # nolint
   statuses <- plan$statuses()
   active <- which(statuses == 2)
   n_char_titles <- max(viapply(plan$queue, function(i) nchar(i$name)))
@@ -53,8 +67,9 @@ report_status.reporter_ansi_tty <- function(reporter, plan) {  # nolint
   cli::cli_progress_update(set = sum(statuses >= 3), .envir = reporter)
 }
 
-report_finalize.reporter_ansi_tty <- function(reporter, plan) {  # nolint
-  report_status(reporter, plan)  # report completions of final processes
+#' @export
+report_finalize.reporter_ansi_tty <- function(reporter, plan) { # nolint
+  report_status(reporter, plan) # report completions of final processes
   cli::cli_progress_done(.envir = reporter)
   cli::ansi_show_cursor()
 }

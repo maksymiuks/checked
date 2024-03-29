@@ -2,12 +2,13 @@ cli_table_row <- function(
   status, ok = "OK", notes = "N", warnings = "W", errors = "E", msg = "",
   title = FALSE
 ) {
+  cli_theme()
   status <- trimws(as.character(status))
   status <- switch(status,
-    "1" = , "2" = , "OK" = , "3" = , "NONE" = cli::col_green("✓"),
-    "4" = , "NOTE" = cli::col_blue("!"),
-    "5" = , "WARNING" = cli::col_magenta("?"),
-    "6" = , "ERROR" = cli::col_yellow("⨯"),
+    "1" = , "2" = , "OK" = , "3" = , "NONE" = cli::format_inline("{.success ✓}"),
+    "4" = , "NOTE" = cli::format_inline("{.note !}"),
+    "5" = , "WARNING" = cli::format_inline("{.warn ?}"),
+    "6" = , "ERROR" = cli::format_inline("{.err ⨯}"),
     if (title) cli::col_none(cli::style_bold(status)) else status
   )
 
@@ -22,12 +23,24 @@ cli_table_row <- function(
     warnings <- cli::col_none(cli::style_bold(warnings))
     errors <- cli::col_none(cli::style_bold(errors))
   } else {
-    ok <- cli::col_none(ok)
-    notes <- cli::col_blue(notes)
-    warnings <- cli::col_magenta(warnings)
-    errors <- cli::col_yellow(errors)
+    ok <- cli::format_inline("{.ok {ok}}")
+    notes <- cli::format_inline("{.note {notes}}")
+    warnings <- cli::format_inline("{.warn {warnings}}")
+    errors <- cli::format_inline("{.err {errors}}")
   }
 
   fmt <- "│ {status} │ {ok} {notes} {warnings} {errors} │ {msg}"
   cli::format_inline(fmt)
+}
+
+cli_theme <- function(..., .envir = parent.frame()) {
+  cli_div(..., .envir = .envir, theme = list(
+    span.ok = list(),
+    span.time_active = list(color = "cyan"),
+    span.time_taken = list(color = "grey"),
+    span.success = list(color = "green"),
+    span.err = list(color = "yellow"),
+    span.warn = list(color = "magenta"),
+    span.note = list(color = "blue")
+  ))
 }

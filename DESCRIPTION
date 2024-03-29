@@ -25,13 +25,13 @@ Description:
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
-  callr,
-  checkmate,
-  cli,
-  desc,
-  miniCRAN,
-  R6,
-  rcmdcheck,
+    callr,
+    checkmate,
+    cli,
+    desc,
+    miniCRAN,
+    R6,
+    rcmdcheck,
 	utils (>= 3.6.2)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
