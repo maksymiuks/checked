@@ -4,18 +4,18 @@
 \alias{run}
 \title{Run Reverse-Dependency Checks}
 \usage{
-run(plan, n_parallel = 2, ..., reporter = default_reporter())
+run(plan, ...)
 }
 \arguments{
-\item{n_parallel}{The number of simultaneous child processes to use.}
-
 \item{...}{Additional arguments unused}
-
-\item{reporter}{A reporter to provide progress updates. Will default to the
-most expressive command-line reporter given your terminal capabilities.}
 
 \item{A}{reverse-dependency plan, or an object coercible into a
 plan.}
+
+\item{n_parallel}{The number of simultaneous child processes to use.}
+
+\item{reporter}{A reporter to provide progress updates. Will default to the
+most expressive command-line reporter given your terminal capabilities.}
 }
 \description{
 Run Reverse-Dependency Checks

@@ -1,6 +1,6 @@
 #' Regular Expression for Parsing R CMD check checks
-# nolint start
-RE_CHECK <- paste0(  
+# nolint start, styler: off
+RE_CHECK <- paste0(
   "(?<=^|\n)",       # starts on a new line (or start of string)
   "\\* checking ",   # literal "* checking "
   "(?<check>.*?)",   # capture any check content as "check"
@@ -11,8 +11,8 @@ RE_CHECK <- paste0(
   ")*",              #   repeating until
   "(?<status>.*?)",  # capturing a status as "status"
   "(?=\n|$)"         # terminated by a new line (or end of string)
-)                    
-# nolint end
+)
+# nolint end, styler: on
 
 #' @importFrom R6 R6Class
 #' @importFrom rcmdcheck rcmdcheck_process
@@ -39,26 +39,23 @@ revcheck_process <- R6::R6Class(
 
       super$initialize(...)
     },
-
     get_time_last_check_start = function() {
       private$time_last_check_start
     },
-
     get_duration = function() {
       (self$get_time_finish() %||% Sys.time()) - self$get_start_time()
     },
-
     get_time_finish = function() {
       private$time_finish
     },
-
     get_status_counts = function() {
       self$poll_output()
       table(private$parsed_checks)
     },
-
     poll_output = function() {
-      if (private$throttle()) return()
+      if (private$throttle()) {
+        return()
+      }
       if (!self$is_alive()) {
         private$time_last_check_start <- NULL
         private$time_finish <- Sys.time()
@@ -78,16 +75,15 @@ revcheck_process <- R6::R6Class(
       if (length(private$parsed_checks) == 0) {
         # no checks were parsed
         private$parsed_partial_check_output <- out
-      } else if (identical(tail(checks, 1), "")) {
+      } else if (identical(unname(tail(checks, 1)), "")) {
         # the most recent output's check is still running
         n <- nrow(captures)
-        private$parsed_partial_check_output  <- substring(out, captures[1, n])
+        private$parsed_partial_check_output <- captures[n, 1]
       } else {
         # the final check was fully parsed
-        private$parsed_partial_check_output  <- ""
+        private$parsed_partial_check_output <- ""
       }
     },
-
     cli_status_line = function(width = cli::console_width()) {
       self$poll_output()
       check_codes <- as.numeric(private$parsed_checks)
@@ -120,7 +116,7 @@ revcheck_process <- R6::R6Class(
       }
 
       msg <- cli::format_inline("{process_time}{check_time}{msg}")
-      counts <- self$get_status_counts() 
+      counts <- self$get_status_counts()
       out <- cli_table_row(
         status = status,
         ok = counts[["NONE"]] + counts[["OK"]],
@@ -202,7 +198,12 @@ checks_capture <- function(x) {
     return(t(matrix(character(0L), nrow = 3, dimnames = list(c("", captures)))))
   }
 
+  # extend boundaries of input text to length of text
   l <- attr(m, "match.length")
+  l[1, 1] <- l[1, 1] + m[1, 1]
+  m[1, 1] <- 0
+  l[1, ncol(l)] <- nchar(x) - m[1, ncol(m)] + 1
+
   t(matrix(
     substring(x, m, m + l - 1),
     nrow = nrow(m),

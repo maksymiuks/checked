@@ -16,7 +16,7 @@
 /*.tar.gz
 
 # Output files from R CMD check
-/*.Rcheck/
+*.Rcheck/
 
 # RStudio files
 .Rproj.user/

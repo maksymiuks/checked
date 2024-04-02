@@ -8,14 +8,13 @@
 #'   most expressive command-line reporter given your terminal capabilities.
 #'
 #' @export
-run <- function(plan, n_parallel = 2, ..., reporter = default_reporter()) {
+run <- function(plan, ...) {
   UseMethod("run")
 }
 
 #' @export
-run.character <- function(plan, ..., reporter) {
-  plan <- revcheck_plan(plan, ...)
-  NextMethod()
+run.character <- function(plan, ..., reporter = default_reporter()) {
+  run(revcheck_plan(plan, ...), reporter = reporter)
 }
 
 #' @export
