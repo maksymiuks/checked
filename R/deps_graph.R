@@ -5,12 +5,14 @@
 #'   indicating whether the package as one of the roots used to create the
 #'   graph), "status" (installation status) and "order" (installation order).
 #'
+#' @importFrom miniCran makeDepGraph
+#' @importFrom igraph V
 dep_graph_create <- function(pkg, ...) {
-  statuses <- c("unavailable", "installing", "installed")
+  statuses <- c("pending", "installing", "installed")
   g <- miniCRAN::makeDepGraph(pkg, ...)
-  V(g)$root <- V(g)$name %in% pkg
-  V(g)$status <- factor("unavailable", levels = statuses)
-  g <- dep_graph_add_install_order(g)
+  igraph::V(g)$root <- igraph::V(g)$name %in% pkg
+  igraph::V(g)$status <- factor("pending", levels = statuses)
+  g <- dep_graph_update_install_order(g)
   g
 }
 
@@ -30,7 +32,7 @@ dep_graph_create <- function(pkg, ...) {
 #'   indicating the order in which dependencies should be installed.
 #'
 #' @importFrom igraph vertex_attr, neighborhood, subgraph.edges, topo_sort, E, V
-dep_graph_add_install_order <- function(g) {
+dep_graph_update_install_order <- function(g) {
   strong_deps <- c("Depends", "Imports", "LinkingTo")
   roots <- which(igraph::vertex_attr(g, "root"))
 
