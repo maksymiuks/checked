@@ -1,3 +1,29 @@
+#' Create Dependency Graph for Reverse Dependencies
+#'
+#' Discovers reverse dependencies and builds a dependency graph for all reverse
+#' dependency dependencies.
+#'
+#' @param pkg A package whose reverse dependencies should be used as the basis
+#'   for the dependency graph.
+#' @inheritParams tools::package_dependencies
+#' @inheritDotParams miniCRAN::makeDepGraph
+#'
+#' @importFrom tools package_dependencies
+revdeps_graph_create <- function(
+    pkg,
+    db = available.packages(),
+    which = "strong",
+    ...) {
+  revdeps <- tools::package_dependencies(
+    pkg,
+    db = db,
+    which = which,
+    recursive = TRUE
+  )
+
+  dep_graph_create(revdeps, ...)
+}
+
 #' Create Dependency Graph
 #'
 #' @param pkg,... Passed to [miniCRAN::makeDepGraph]
@@ -5,7 +31,7 @@
 #'   indicating whether the package as one of the roots used to create the
 #'   graph), "status" (installation status) and "order" (installation order).
 #'
-#' @importFrom miniCran makeDepGraph
+#' @importFrom miniCRAN makeDepGraph
 #' @importFrom igraph V
 dep_graph_create <- function(pkg, ...) {
   statuses <- c("pending", "installing", "installed")
@@ -31,7 +57,7 @@ dep_graph_create <- function(pkg, ...) {
 #' @return The [igraph::graph] `g`, with additional `order` vertex attribute,
 #'   indicating the order in which dependencies should be installed.
 #'
-#' @importFrom igraph vertex_attr, neighborhood, subgraph.edges, topo_sort, E, V
+#' @importFrom igraph vertex_attr neighborhood subgraph.edges topo_sort E V
 dep_graph_update_install_order <- function(g) {
   strong_deps <- c("Depends", "Imports", "LinkingTo")
   roots <- which(igraph::vertex_attr(g, "root"))

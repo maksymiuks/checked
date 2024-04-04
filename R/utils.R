@@ -1,37 +1,38 @@
-check_input_pkg <- function(pkg) {
+#' @import cli
+"_PACKAGE"
+
+DEPENDENCIES <- c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances") # nolint
+DEPENDENCIES_STRONG <- DEPENDENCIES[1:3] # nolint
+
+check_path_is_pkg_source <- function(pkg) {
   checkmate::assert_string(pkg)
   checkmate::assert_directory_exists(pkg)
   checkmate::assert_file_exists(file.path(pkg, "DESCRIPTION"))
-  
   normalizePath(pkg, mustWork = TRUE)
 }
 
-check_input_dependencies <- function(dependencies) {
-  
-  
+check_dependencies <- function(dependencies) {
   dependencies <- if (isTRUE(dependencies)) {
-    c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances")
+    DEPENDENCIES
   } else if (length(dependencies) == 1 && is.na(dependencies)) {
-    c("Depends", "Imports", "LinkingTo")
+    DEPENDENCIES_STRONG
   } else if (is.character(dependencies)) {
-    dependencies
+    valid_deps <- dependencies %in% DEPENDENCIES
+    if (!all(valid_deps)) {
+      warning(
+        "Passed dependencies names does not match standard R dependencies ",
+        "names. The non-standard names has been removed."
+      )
+    }
+    dependencies[valid_deps]
   } else {
-    stop("Dependencies has to be a TRUE/NA logical or character vector with ",
-         "names of standard R dependencies.")
+    stop(
+      "Dependencies has to be a TRUE/NA logical or character vector with ",
+      "names of standard R dependencies."
+    )
   }
-  
-  matched_deps <- dependencies[dependencies %in% DEPENDENCIES]
-  
-  dependencies <- if (!identical(matched_deps, dependencies)) {
-    warning("Passed dependencies names does not match standard R dependencies names. ",
-            "The non-standard names has been removed")
-    matched_deps
-  } else {
-    dependencies
-  }
-  
+
   checkmate::assert_character(dependencies, min.len = 1)
-  
   dependencies
 }
 
@@ -40,11 +41,10 @@ get_package_name <- function(path) {
 }
 
 dir_create <- function(path) {
-  if (!dir.exists(path)) dir.create(path, showWarnings = FALSE, recursive = TRUE)
+  if (!dir.exists(path)) {
+    dir.create(path, showWarnings = FALSE, recursive = TRUE)
+  }
 }
-
-#' @import cli
-"_PACKAGE"
 
 `%||%` <- function(lhs, rhs) if (is.null(lhs)) rhs else lhs
 vcapply <- function(...) vapply(..., FUN.VALUE = character(1L))

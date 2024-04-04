@@ -12,15 +12,19 @@ revcheck_plan <- function(paths, n_parallel = 4) {
         args = "--no-manual",
         build_args = "--no-manual"
       ),
-      process = NULL  # placeholder for callr subprocess handle
+      process = NULL # placeholder for callr subprocess handle
     ))
   })
 
   self$start_next <- function(n = n_parallel) {
     idx_last_finished <- Position(process_finished, self$queue, right = TRUE, nomatch = 0)
     idx_next <- Position(Negate(process_started), self$queue, nomatch = NULL)
-    if (is.null(idx_next)) return(FALSE)  # no more to process
-    if (idx_next - idx_last_finished > n) return(FALSE)  # saturating n_parallel
+    if (is.null(idx_next)) {
+      return(FALSE)
+    } # no more to process
+    if (idx_next - idx_last_finished > n) {
+      return(FALSE)
+    } # saturating n_parallel
     item <- self$queue[[idx_next]]
     item$process <- do.call(revcheck_process$new, item$args)
     TRUE
