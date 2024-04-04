@@ -14,12 +14,12 @@ revdeps_graph_create <- function(
     db = available.packages(),
     which = "strong",
     ...) {
-  revdeps <- tools::package_dependencies(
+  revdeps <- unlist(tools::package_dependencies(
     pkg,
     db = db,
     which = which,
-    recursive = TRUE
-  )
+    reverse = TRUE
+  ))
 
   dep_graph_create(revdeps, ...)
 }
@@ -54,10 +54,10 @@ dep_graph_create <- function(pkg, ...) {
 #'   2. Topology (leaf nodes first)
 #'
 #' @param g A [igraph::graph], expected to contain node attribute `type`.
-#' @return The [igraph::graph] `g`, with additional `order` vertex attribute,
-#'   indicating the order in which dependencies should be installed.
+#' @return The [igraph::graph] `g`, with vertices sorted in preferred
+#'   installation order.
 #'
-#' @importFrom igraph vertex_attr neighborhood subgraph.edges topo_sort E V
+#' @importFrom igraph vertex_attr neighborhood subgraph.edges permute topo_sort E V
 dep_graph_update_install_order <- function(g) {
   strong_deps <- c("Depends", "Imports", "LinkingTo")
   roots <- which(igraph::vertex_attr(g, "root"))
@@ -88,7 +88,25 @@ dep_graph_update_install_order <- function(g) {
   # combine priorities, prioritize first by total, footprint then topology
   priorities <- rbind(priority_footprint, priority_topo)
   order <- rank(length(igraph::V(g))^seq(nrow(priorities) - 1, 0) %*% priorities)
-  igraph::vertex_attr(g, "order") <- order
+  g <- igraph::permute(g, order)
 
   g
+}
+
+#' Find the Next Packages Not Dependent on an Unavailable Package
+#'
+#' While other packages are installing, ensure that the next selected package
+#' already has its dependencies installed.
+#'
+#' @param g A dependency graph, as produced with [dep_graph_create()]
+#' @return The name of the next package to prioritize
+#'
+#' @importFrom igraph incident_edges tail_of
+dep_graph_next_packages <- function(g) {
+  deps_met <- vlapply(
+    igraph::incident_edges(g, V(g)[V(g)$status == "pending"], mode = "in"),
+    function(edges) all(igraph::tail_of(g, edges)$status == "installed")
+  )
+
+  names(deps_met[deps_met])
 }
