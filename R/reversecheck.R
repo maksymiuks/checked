@@ -48,3 +48,8 @@ reversecheck <- function(pkg = "./",
   
   invisible(NULL)
 }
+
+
+reversecheck_deafult_rcmd_params <- function() {
+  list()
+}

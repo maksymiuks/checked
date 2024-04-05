@@ -2,19 +2,20 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, repos, type, ca
   ap <- utils::available.packages(repos = repos, filters = cache_filters)
   
   pkgs_cache <- suppressWarnings(tryCatch(
-    utils::available.packages(repos = repos)[, "Package"],
+    utils::available.packages(repos = get_reversecheck_cache_repo(reversecheck_dir, TRUE))[, "Package"],
     error = function(e) {
       character(0)
     }))
   
-  revdeps <- revdeps[revdeps$status == "awaiting"]
+  revdeps <- revdeps[revdeps$status == "TODO", ]
   
   revdeps_deps <- miniCRAN::pkgDep(
     pkg = revdeps$package, 
     availPkgs = ap,
     epos = NULL, 
     type = "source", 
-    suggests = TRUE
+    suggests = TRUE,
+    enhances = TRUE
   )
   
   revdeps_deps <- revdeps_deps[!revdeps_deps %in% pkgs_cache]
