@@ -17,9 +17,9 @@ prepare_filesystem_process <- R6::R6Class(
       
       options$func <- function(revdep, reversecheck_dir, repos, lib.loc) {
         
-        get_revdep_source(revdep, repos, get_reversecheck_revdep_dir(reversecheck_dir, revdep))
-        dir_create(revdep_lib_path <- get_reversecheck_revdep_lib(reversecheck_dir, revdep))
-        cache_repo_path <- get_reversecheck_cache_repo(reversecheck_dir, TRUE)
+        get_revdep_source(revdep, repos, path_revdep(reversecheck_dir, revdep))
+        dir_create(revdep_lib_path <- path_revdep_lib(reversecheck_dir, revdep))
+        cache_repo_path <- path_cache_repo(reversecheck_dir, TRUE)
         deps <- miniCRAN::pkgDep(
           revdep,
           availPkgs = available.packages(repos = cache_repo_path),
@@ -27,6 +27,7 @@ prepare_filesystem_process <- R6::R6Class(
           suggests = TRUE,
           enhances = TRUE
         )
+        
         symlink_or_copy(
           from = find.package(deps, lib.loc = lib.loc),
           to = revdep_lib_path

@@ -1,5 +1,5 @@
 get_revdeps_from_dir <- function(reversecheck_dir) {
-  revdeps_dir <- get_reversecheck_revdeps_dir(reversecheck_dir)
+  revdeps_dir <- path_revdeps(reversecheck_dir)
   revdeps <- list.dirs(revdeps_dir, recursive = FALSE, full.names = FALSE)
   
   data.frame(

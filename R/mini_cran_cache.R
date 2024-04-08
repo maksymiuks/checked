@@ -2,7 +2,7 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, repos, type, ca
   ap <- utils::available.packages(repos = repos, filters = cache_filters)
   
   pkgs_cache <- suppressWarnings(tryCatch(
-    utils::available.packages(repos = get_reversecheck_cache_repo(reversecheck_dir, TRUE))[, "Package"],
+    utils::available.packages(repos = path_cache_repo(reversecheck_dir, TRUE))[, "Package"],
     error = function(e) {
       character(0)
     }))
@@ -32,7 +32,7 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, repos, type, ca
     }
     miniCRAN::addPackage(
       pkgs = pkgs[, "Package"],
-      path = get_reversecheck_cache_repo(reversecheck_dir),
+      path = path_cache_repo(reversecheck_dir),
       repos = repo,
       type = type,
       Rversion = R.version,
@@ -40,7 +40,7 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, repos, type, ca
     )
   })
   miniCRAN::updateRepoIndex(
-    get_reversecheck_cache_repo(reversecheck_dir), 
+    path_cache_repo(reversecheck_dir), 
     type = type, 
     Rversion = R.version
   )
@@ -48,15 +48,16 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, repos, type, ca
 }
 
 preinstall_dependencies_cache <- function(reversecheck_dir, lib.loc) {
-  pkgs <- utils::available.packages(repos = get_reversecheck_cache_repo(reversecheck_dir, TRUE))[, "Package"]
+  pkgs <- utils::available.packages(repos = path_cache_repo(reversecheck_dir, TRUE))[, "Package"]
   
   for (pkg in pkgs) {
     install_packages(
       pkg,
-      repos = get_reversecheck_cache_repo(reversecheck_dir, TRUE),
+      repos = path_cache_repo(reversecheck_dir, TRUE),
+      lib = path_lib(reversecheck_dir, "cache")
       lib.loc = lib.loc,
-      logs_path = file.path(get_reversecheck_lib_logs(reversecheck_dir, "cache"), make.names(pkg), "subprocess.log"),
-      keep_outputs = file.path(get_reversecheck_lib_logs(reversecheck_dir, "cache"), make.names(pkg))
+      logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg), "subprocess.log"),
+      keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg))
     )
   }
 }

@@ -26,28 +26,28 @@ reversecheck_initialize <- function(
 
 install_pkg <- function(pkg, reversecheck_dir, lib.loc) {
   name <- get_package_name(pkg)
-  old <- get_reversecheck_lib(reversecheck_dir, "old")
-  new <- get_reversecheck_lib(reversecheck_dir, "new")
+  old <- path_lib(reversecheck_dir, "old")
+  new <- path_lib(reversecheck_dir, "new")
   
   if (!is_package_installed(name, old)) {
     install_packages(
       pkgs = name, 
-      lib = get_reversecheck_lib(reversecheck_dir, "old"), 
+      lib = old, 
       lib.loc = lib.loc, 
-      logs_path = file.path(get_reversecheck_lib_logs(reversecheck_dir, "old"), "old.log"),
-      keep_outputs = file.path(get_reversecheck_lib_logs(reversecheck_dir, "old"))
+      logs_path = file.path(path_logs(reversecheck_dir, "old"), "old.log"),
+      keep_outputs = file.path(path_ogs(reversecheck_dir, "old"))
     )
   }
 
   if (!is_package_installed(name, new)) {
     install_packages(
       pkgs = pkg, 
-      lib = get_reversecheck_lib(reversecheck_dir, "new"), 
+      lib = new, 
       lib.loc = lib.loc,
       repos = NULL,
       type = "source",
-      logs_path = file.path(get_reversecheck_lib_logs(reversecheck_dir, "new"), "new.log"),
-      keep_outputs = file.path(get_reversecheck_lib_logs(reversecheck_dir, "new"))
+      logs_path = file.path(path_logs(reversecheck_dir, "new"), "new.log"),
+      keep_outputs = file.path(path_logs(reversecheck_dir, "new"))
     )
   }
 }

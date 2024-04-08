@@ -1,19 +1,25 @@
-setup_reversecheck <- function(reversecheck_dir, pre_clear, cache) {
-  if (pre_clear) unlink(reversecheck_dir, recursive = TRUE, force = TRUE) 
+setup_reversecheck <- function(path, cache) {
+  if (pre_clear) unlink(path, recursive = TRUE, force = TRUE) 
   
-  dir_create(reversecheck_dir)
-  dir_create(get_reversecheck_cache_repo(reversecheck_dir))
-  if (cache != "none") dir_create(get_reversecheck_lib(reversecheck_dir, "cache"))
-  dir_create(get_reversecheck_lib(reversecheck_dir, "old"))
-  dir_create(get_reversecheck_lib(reversecheck_dir, "new"))
-  if (cache != "none") dir_create(get_reversecheck_lib_logs(reversecheck_dir, "cache"))
-  dir_create(get_reversecheck_lib_logs(reversecheck_dir, "old"))
-  dir_create(get_reversecheck_lib_logs(reversecheck_dir, "new"))
-  dir_create(get_reversecheck_revdeps_dir(reversecheck_dir))
+  dir_create(path)
+  dir_create(path_cache_repo(path))
+  
+  if (cache != "none") dir_create(path_lib(path, "cache"))
+  dir_create(path_lib(path, "old"))
+  dir_create(path_lib(path, "new"))
+  
+  if (cache != "none") dir_create(path_logs(path, "cache"))
+  dir_create(path_logs(path, "old"))
+  dir_create(path_logs(path, "new"))
+  dir_create(path_revdeps(path))
 }
 
-get_reversecheck_cache_repo <- function(reversecheck_dir, repos = FALSE) {
-  path <- normalizePath(file.path(reversecheck_dir, "repo"), mustWork = FALSE)
+path_default <- function() {
+  file.path(tempdir(), utils::packageName())
+}
+
+path_cache_repo <- function(path, repos = FALSE) {
+  path <- normalizePath(file.path(path, "repo"), mustWork = FALSE)
   if (repos) {
     paste0("file://", path)
   } else {
@@ -21,31 +27,29 @@ get_reversecheck_cache_repo <- function(reversecheck_dir, repos = FALSE) {
   }
 }
 
-get_reversecheck_lib <- function(reversecheck_dir, lib = c("cache", "new", "old")) {
-  lib <- match.arg(lib)
-  normalizePath(file.path(reversecheck_dir, "libs", paste0("R_REVERSECHECK_LIB_", toupper(lib))), mustWork = FALSE)
+path_lib <- function(path, lib = c("cache", "new", "old")) {
+  lib <- match.arg(lib, c("cache", "new", "old"))
+  normalizePath(file.path(path, "libs", paste0("R_REVERSECHECK_LIB_", toupper(lib))), mustWork = FALSE)
 }
 
-get_reversecheck_lib_logs <- function(reversecheck_dir, lib = c("cache", "new", "old")) {
-  lib <- match.arg(lib)
-  normalizePath(file.path(reversecheck_dir, "libs", "logs", lib), mustWork = FALSE)
+path_logs <- function(path, lib = c("cache", "new", "old")) {
+  lib <- match.arg(lib, c("cache", "new", "old"))
+  normalizePath(file.path(path, "libs", "logs", lib), mustWork = FALSE)
 }
 
-get_reversecheck_revdeps_dir <- function(reversecheck_dir) {
-  normalizePath(file.path(reversecheck_dir, "revdeps"), mustWork = FALSE)
+path_revdeps <- function(path) {
+  normalizePath(file.path(path, "revdeps"), mustWork = FALSE)
 }
 
-get_reversecheck_revdep_dir <- function(reversecheck_dir, revdep) {
-  normalizePath(file.path(get_reversecheck_revdeps_dir(reversecheck_dir), revdep), mustWork = FALSE)
-}
-
-
-get_reversecheck_revdep_lib <- function(reversecheck_dir, revdep) {
-  normalizePath(file.path(get_reversecheck_revdep_dir(reversecheck_dir, revdep), paste0("R_REVERSECHECK_LIB_", toupper(revdep))), mustWork = FALSE)
-}
-
-get_reversecheck_revdep_logs_dir <- function(reversecheck_dir, revdep) {
-  normalizePath(file.path(get_reversecheck_revdep_dir(reversecheck_dir, revdep), "logs"), mustWork = FALSE)
+path_revdep <- function(path, revdep) {
+  normalizePath(file.path(path_revdeps(path), revdep), mustWork = FALSE)
 }
 
 
+path_revdep_lib <- function(path, revdep) {
+  normalizePath(file.path(path_revdep(path, revdep), paste0("R_REVERSECHECK_LIB_", toupper(revdep))), mustWork = FALSE)
+}
+
+path_revdep_logs <- function(path, revdep) {
+  normalizePath(file.path(path_revdep(path, revdep), "logs"), mustWork = FALSE)
+}
