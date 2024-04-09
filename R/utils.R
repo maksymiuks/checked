@@ -12,9 +12,12 @@ check_path_is_pkg_source <- function(pkg) {
 }
 
 check_dependencies <- function(dependencies) {
-  dependencies <- if (isTRUE(dependencies)) {
+  is_all <- isTRUE(dependencies)
+  is_strong <- length(dependencies) == 1 && is.na(dependencies)
+
+  dependencies <- if (dependencies == "all" || is_all) {
     DEPENDENCIES
-  } else if (length(dependencies) == 1 && is.na(dependencies)) {
+  } else if (dependencies == "strong" || is_strong) {
     DEPENDENCIES_STRONG
   } else if (is.character(dependencies)) {
     valid_deps <- dependencies %in% DEPENDENCIES
