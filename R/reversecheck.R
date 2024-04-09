@@ -3,10 +3,10 @@ reversecheck <- function(pkg = "./",
                          reversecheck_dir = "./reversecheck",
                          lib.loc = .libPaths(),
                          dependencies = TRUE,
+                         n_childs = 1L,
                          cache = c("preinstall", "standard", "none"),
                          repos = getOption("repos"),
                          dependencies_repos = repos,
-                         timeout = as.difftime(60, units = "mins"),
                          sampling = NULL,
                          rcmdcheck_params = reversecheck_deafult_rcmd_params(),
                          pre_clear = FALSE,
@@ -36,10 +36,13 @@ reversecheck <- function(pkg = "./",
     cache_filters = cache_filters,
     ...
   )
-  reversecheck_check(
+  
+  reversecheck_run(
     pkg = pkg,
     reversecheck_dir = reversecheck_dir,
-    timeout = timeout,
+    lib.loc = lib.loc,
+    n_childs = n_childs,
+    repos = repos,
     rcmdcheck_params = rcmdcheck_params,
     ...
   )

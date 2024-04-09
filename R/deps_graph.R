@@ -110,3 +110,12 @@ dep_graph_next_packages <- function(g) {
 
   names(deps_met[deps_met])
 }
+
+dep_graph_set_package_status <- function(G, v, status) {
+  igraph::set_vertex_attr(G, "status", v, factor(status, levels = c("pending", "installing", "installed")))
+}
+
+dep_graph_is_dependency <- function(G, v) {
+   length(igraph::adjacent_vertices(G, v, "out")[[v]]) > 0
+}
+#igraph::vertex.attributes(G, "rlang")

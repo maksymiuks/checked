@@ -54,7 +54,7 @@ preinstall_dependencies_cache <- function(reversecheck_dir, lib.loc) {
     install_packages(
       pkg,
       repos = path_cache_repo(reversecheck_dir, TRUE),
-      lib = path_lib(reversecheck_dir, "cache")
+      lib = path_lib(reversecheck_dir, "cache"),
       lib.loc = lib.loc,
       logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg), "subprocess.log"),
       keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg))

@@ -13,7 +13,7 @@ reversecheck_initialize <- function(
   
   revdeps <- revdeps(pkg, reversecheck_dir, dependencies, repos, sampling)
 
-  install_pkg(pkg, reversecheck_dir, lib.loc)
+  install_pkg(pkg, reversecheck_dir, repos, lib.loc)
   setup_minicran_cache_repo(revdeps, reversecheck_dir, repos, cache_type, cache_filters)
   
   if (cache == "preinstall") 
@@ -24,16 +24,17 @@ reversecheck_initialize <- function(
 
 
 
-install_pkg <- function(pkg, reversecheck_dir, lib.loc) {
+install_pkg <- function(pkg, reversecheck_dir, repos, lib.loc) {
   name <- get_package_name(pkg)
   old <- path_lib(reversecheck_dir, "old")
   new <- path_lib(reversecheck_dir, "new")
   
   if (!is_package_installed(name, old)) {
     install_packages(
-      pkgs = name, 
-      lib = old, 
-      lib.loc = lib.loc, 
+      pkgs = name,
+      lib = old,
+      repos = repos,
+      lib.loc = lib.loc,
       logs_path = file.path(path_logs(reversecheck_dir, "old"), "old.log"),
       keep_outputs = file.path(path_ogs(reversecheck_dir, "old"))
     )
