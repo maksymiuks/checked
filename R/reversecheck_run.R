@@ -72,7 +72,7 @@ reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
       )
       append(processes, process) 
     } else {
-      warning("WIP: Potential nfinite loop warning - add smart detection for that")
+      warning("WIP: Potential infinite loop warning - add smart detection for that")
       processes
     }
   }

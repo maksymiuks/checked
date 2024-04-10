@@ -152,4 +152,3 @@ dep_graph_update_installed <- function(G, lib.loc) {
   }))
   dep_graph_set_package_status(G, V[which_installed], "installed")
 }
-#igraph::vertex.attributes(G, "rlang")
