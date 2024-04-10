@@ -102,10 +102,14 @@ dep_graph_sort <- function(g) {
 #' @return The name of the next package to prioritize
 #'
 #' @importFrom igraph incident_edges tail_of
-dep_graph_which_satisfied <- function(g, v = igraph::V(g), dependencies = TRUE) { # nolint
+dep_graph_which_satisfied <- function(g, v = igraph::V(g), dependencies = TRUE, status = "pending") { # nolint
   dependencies <- check_dependencies(dependencies)
+  if (length(status) > 0) {
+    idx <- v$status == status
+    v <- v[idx]
+  }
   deps_met <- vlapply(
-    igraph::incident_edges(g, V(g)[V(g)$status == "pending"], mode = "in"),
+    igraph::incident_edges(g, v, mode = "in"),
     function(edges) {
       edges <- edges[edges$type %in% dependencies]
       all(igraph::tail_of(g, edges)$status == "installed")
@@ -122,11 +126,29 @@ dep_graph_which_satisfied_strong <- function(..., dependencies = "strong") { # n
 
 #' @describeIn dep_graph_which_satisfied
 #' List root vertices whose dependencies are all satisfied
-dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all") {
+dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all", status = "installed") {
   dep_graph_which_satisfied(
     g,
     igraph::V(g)[igraph::V(g)$root],
     ...,
-    dependencies = dependencies
+    dependencies = dependencies,
+    status = status
   )
+}
+
+dep_graph_set_package_status <- function(G, v, status) {
+  igraph::set_vertex_attr(G, "status", v, factor(status, levels = c("pending", "installing", "installed")))
+}
+
+dep_graph_is_dependency <- function(G, v) {
+   length(igraph::adjacent_vertices(G, v, "out")[[v]]) > 0
+}
+
+dep_graph_update_installed <- function(G, lib.loc) {
+  V <- igraph::V(G)
+  
+  which_installed <- which(vlapply(V$name, function(p) {
+    is_package_installed(p, lib.loc)
+  }))
+  dep_graph_set_package_status(G, V[which_installed], "installed")
 }

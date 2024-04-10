@@ -3,7 +3,7 @@ install_packages <- function(
     lib.loc = .libPaths(), 
     logs_path = tempfile("reversecheck"),
     async = FALSE) {
-  
+  dir_create(dirname(logs_path))
   args <- list(...)
   f <- if (async) {
     callr::r_bg

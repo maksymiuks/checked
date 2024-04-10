@@ -1,4 +1,4 @@
-STATUSES <- c("TODO", "READY", "IN_PROGRESS", "DONE")
+STATUSES <- c("TODO", "PREPARING", "READY", "IN_PROGRESS_OLD", "IN_PROGRESS", "DONE")
 
 get_revdep_status <- function(reversecheck_dir, revdep_name) {
   revdep_dir <- path_revdep(reversecheck_dir, revdep_name)

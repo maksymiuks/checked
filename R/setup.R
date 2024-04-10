@@ -1,14 +1,12 @@
-setup_reversecheck <- function(path, cache) {
-  if (pre_clear) unlink(path, recursive = TRUE, force = TRUE) 
-  
+setup_reversecheck <- function(path) {
   dir_create(path)
   dir_create(path_cache_repo(path))
   
-  if (cache != "none") dir_create(path_lib(path, "cache"))
+  dir_create(path_lib(path, "cache"))
   dir_create(path_lib(path, "old"))
   dir_create(path_lib(path, "new"))
   
-  if (cache != "none") dir_create(path_logs(path, "cache"))
+  dir_create(path_logs(path, "cache"))
   dir_create(path_logs(path, "old"))
   dir_create(path_logs(path, "new"))
   dir_create(path_revdeps(path))
