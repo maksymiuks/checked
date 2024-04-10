@@ -42,7 +42,7 @@ reversecheck <- function(pkg = "./",
     ...
   )
   
-  reversecheck_report()
+#  reversecheck_report()
   
   invisible(NULL)
 }

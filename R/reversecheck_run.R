@@ -23,71 +23,57 @@ reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
     todo <- revdeps[revdeps$status == "TODO", ]
     ready <- revdeps[revdeps$status %in% c("READY", "IN_PROGRESS_OLD"), ]
     
-    G <- dep_graph_update_install_order(G)
-    next_packages <- dep_graph_next_packages(G)
-    if ("DALEXtra" %in% next_packages) browser()
-    
+    G <- dep_graph_update_installed(G, reversecheck_lib_loc(lib.loc, reversecheck_dir))
+    G <- dep_graph_sort(G)
+    next_packages_install <- dep_graph_which_satisfied_strong(G)
+    next_packages_check <- dep_graph_which_root_satisfied(G)
+
     
     processes <- if (NROW(ready) > 0) {
-      pkg <- ready[1, ]
-      process <- if(pkg$status == "READY") {
-        set_revdep_status(reversecheck_dir, pkg$package, "IN_PROGRESS_OLD")
-        revcheck_process(reversecheck_dir, pkg$package, "old", lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir, "old"))
+      p <- ready[1, ]
+      process <- if(p$status == "READY") {
+        set_revdep_status(reversecheck_dir, p$package, "IN_PROGRESS_OLD")
+        revcheck_process(p$package, reversecheck_dir, "old", lib.loc = reversecheck_check_lib_loc(p$package, lib.loc, reversecheck_dir, "old"))
       } else {
-        set_revdep_status(reversecheck_dir, pkg$package, "IN_PROGRESS")
-        revcheck_process(reversecheck_dir, pkg$package, "new", lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir, "new"))
+        set_revdep_status(reversecheck_dir, p$package, "IN_PROGRESS")
+        revcheck_process(p$package, reversecheck_dir, "new", lib.loc = reversecheck_check_lib_loc(p$package, lib.loc, reversecheck_dir, "new"))
       }
       append(processes, process)
-    } else if (any(todo$package %in% next_packages)) {
+    } else if (any(todo$package %in% next_packages_check)) {
       
-      pkg <- todo[which(todo$package %in% next_packages)[1], ]
+      p <- todo[which(todo$package %in% next_packages_check)[1], ]
       # revdeps that are not dependencies for any other dependencies can
       # be immediately marked as installed 
-      if (!dep_graph_is_dependency(G, pkg)) {
-        G <- dep_graph_set_package_status(G, pkg, "installed")
+      if (!dep_graph_is_dependency(G, p$package)) {
+        G <- dep_graph_set_package_status(G, p$package, "installed")
       }
       
-      set_revdep_status(reversecheck_dir, pkg$package, "PREPARING")
+      set_revdep_status(reversecheck_dir, p$package, "PREPARING")
       process <- prepare_filesystem_process$new(
-        pkg,
+        p$package,
+        get_package_name(pkg),
         reversecheck_dir,
         repos = repos,
         lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir)
       )
       append(processes, process) 
-    } else if (length(next_packages > 0)) {
-      for (pkg in next_packages) {
-        status <- igraph::vertex.attributes(G, pkg)$status
-        pkg_installed <- is_package_installed(pkg, reversecheck_lib_loc(lib.loc, reversecheck_dir))
-        if (pkg %in% revdeps$package && !dep_graph_is_dependency(G, pkg)) {
-          next() # revdeps which are not dependencies for other revdeps shall not be installed
-        } else if (status == "pending" && !pkg_installed) {
-          break() # Found next package to be installed
-        } else if (status %in% c("pending", "installing") && pkg_installed) {
-          status <- "installed"
-          G <- dep_graph_set_package_status(G, pkg, status)
-        }
-      }
-      
-      # If the loop finished and the last value of status is different than pending,
-      # it means there is no more packages to install in this iteration of the
-      # scheduler
-      if (status != "pending") next()
-      
-      G <- dep_graph_set_package_status(G, pkg, "installing")
+    } else if (length(next_packages_install > 0)) {
+      p <- next_packages_install[1]
+      G <- dep_graph_set_package_status(G, p, "installing")
 
       process <- install_packages(
-        pkgs = pkg, 
+        pkgs = p, 
         lib = path_lib(reversecheck_dir, "cache"), 
-        keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg)),
+        keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(p)),
         repos = path_cache_repo(reversecheck_dir, TRUE),
         lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir), 
-        logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg), "subprocess.log"),
+        logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(p), "subprocess.log"),
         async = TRUE
       )
       append(processes, process) 
     } else {
-      warning("WIP: Infinite loop warning")
+      warning("WIP: Potential nfinite loop warning - add smart detection for that")
+      processes
     }
   }
 }
@@ -104,16 +90,19 @@ scheduler_loop_finished <- function(revdeps, processes) {
 
 ### PLACEHOLDER
 revcheck_process <- function(revdep, reversecheck_dir, type, lib.loc) {
-  callr::r_bg(function(revdep, reversecheck_dir, type) {
-    path <- normalizePath(file.path(path_revdep(reversecheck_dir, revdep), type, "results.json"), mustWork = FALSE)
+  callr::r_bg(function(revdep, reversecheck_dir, type, lib.loc) {
+    path <- normalizePath(file.path(path_revdep(reversecheck_dir, revdep), type, "results.csv"), mustWork = FALSE)
     dir_create(dirname(path))
     write.csv(as.data.frame(installed.packages(lib.loc = lib.loc)), file = path)
-    if (type == "NEW") {
+    if (type == "new") {
       set_revdep_status(reversecheck_dir, revdep, status = "DONE")
     }
   }, args = list(
     revdep = revdep,
     reversecheck_dir = reversecheck_dir,
-    type = type)
+    type = type,
+    lib.loc = lib.loc
+  ), 
+    package = "reversecheck"
   )
 }

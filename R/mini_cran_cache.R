@@ -11,6 +11,10 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, lib.loc, repos,
   
   revdeps <- revdeps[revdeps$status == "TODO", ]
   
+  if (NROW(revdeps) == 0) {
+    return(invisible(NULL))
+  }
+  
   revdeps_deps <- miniCRAN::pkgDep(
     pkg = revdeps$package, 
     availPkgs = ap,

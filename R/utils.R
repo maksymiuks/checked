@@ -12,9 +12,12 @@ check_path_is_pkg_source <- function(pkg) {
 }
 
 check_dependencies <- function(dependencies) {
-  dependencies <- if (isTRUE(dependencies)) {
+  is_all <- isTRUE(dependencies)
+  is_strong <- length(dependencies) == 1 && is.na(dependencies)
+
+  dependencies <- if (dependencies == "all" || is_all) {
     DEPENDENCIES
-  } else if (length(dependencies) == 1 && is.na(dependencies)) {
+  } else if (dependencies == "strong" || is_strong) {
     DEPENDENCIES_STRONG
   } else if (is.character(dependencies)) {
     valid_deps <- dependencies %in% DEPENDENCIES
@@ -64,10 +67,18 @@ is_package_installed <- function(pkg, lib.loc) {
   length(path) > 0
 }
 
-reversecheck_lib_loc <- function(lib.loc, reversecheck_dir, type = "old") {
+reversecheck_lib_loc <- function(lib.loc, reversecheck_dir) {
+  unique(normalizePath(c(
+    path_lib(reversecheck_dir, "old"),
+    path_lib(reversecheck_dir, "cache"),
+    lib.loc
+  ), mustWork = FALSE))
+}
+
+reversecheck_check_lib_loc <- function(pkg, lib.loc, reversecheck_dir, type = "old") {
   unique(normalizePath(c(
     path_lib(reversecheck_dir, type),
-    path_lib(reversecheck_dir, "cache"),
+    path_revdep_lib(reversecheck_dir, pkg),
     lib.loc
   ), mustWork = FALSE))
 }
