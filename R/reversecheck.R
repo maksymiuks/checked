@@ -4,36 +4,31 @@ reversecheck <- function(pkg = "./",
                          lib.loc = .libPaths(),
                          dependencies = TRUE,
                          n_childs = 1L,
-                         cache = c("preinstall", "standard", "none"),
                          repos = getOption("repos"),
                          dependencies_repos = repos,
                          sampling = NULL,
                          rcmdcheck_params = reversecheck_deafult_rcmd_params(),
-                         pre_clear = FALSE,
-                         cache_type = "source",
-                         cache_filters = NULL,
+                         minicran_type = "source",
+                         minicran_filters = NULL,
                          ...) {
   
-  pkg <- check_input_pkg(pkg)
-  dependencies <- check_input_dependencies(dependencies)
-  cache <- match.arg(cache, c("preinstall", "standard", "none"))
-  checkmate::assert_class(timeout, "difftime")
+  pkg <- check_path_is_pkg_source(pkg)
+  dependencies <- check_dependencies(dependencies)
   checkmate::assert_function(sampling, null.ok = TRUE)
   checkmate::assert_character(rcmdcheck_params, null.ok = TRUE)
   
-  setup_reversecheck(reversecheck_dir, pre_clear, cache)
+  setup_reversecheck(reversecheck_dir)
   
   reversecheck_initialize(
     pkg = pkg,
     reversecheck_dir = reversecheck_dir,
     lib.loc = lib.loc,
     dependencies = dependencies,
-    cache = cache,
     repos = repos,
     dependencies_repos = dependencies_repos,
     sampling = sampling,
-    cache_type = cache_type,
-    cache_filters = cache_filters,
+    minicran_type = minicran_type,
+    minicran_filters = minicran_filters,
     ...
   )
   
@@ -54,5 +49,5 @@ reversecheck <- function(pkg = "./",
 
 
 reversecheck_deafult_rcmd_params <- function() {
-  list()
+  c()
 }

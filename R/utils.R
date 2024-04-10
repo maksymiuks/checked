@@ -64,8 +64,12 @@ is_package_installed <- function(pkg, lib.loc) {
   length(path) > 0
 }
 
-use_cached_package <- function(from, to) {
-  
+reversecheck_lib_loc <- function(lib.loc, reversecheck_dir, type = "old") {
+  unique(normalizePath(c(
+    path_lib(reversecheck_dir, type),
+    path_lib(reversecheck_dir, "cache"),
+    lib.loc
+  ), mustWork = FALSE))
 }
 
 #' @import cli

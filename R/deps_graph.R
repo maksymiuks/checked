@@ -103,8 +103,9 @@ dep_graph_update_install_order <- function(g) {
 #'
 #' @importFrom igraph incident_edges tail_of
 dep_graph_next_packages <- function(g) {
+  g <- igraph::delete.edges(g, E(g)[igraph::which_mutual(g)][E(g)[igraph::which_mutual(g)]$type == "Suggests"])
   deps_met <- vlapply(
-    igraph::incident_edges(g, V(g)[V(g)$status == "pending"], mode = "in"),
+    igraph::incident_edges(g, V(g)[V(g)$status != "installed"], mode = "in"),
     function(edges) all(igraph::tail_of(g, edges)$status == "installed")
   )
 
