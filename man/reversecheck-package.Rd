@@ -2,10 +2,11 @@
 % Please edit documentation in R/utils.R
 \docType{package}
 \name{reversecheck-package}
-\alias{reversecheck}
 \alias{reversecheck-package}
 \title{reversecheck: Systematically Run R Checks Against Reverse Dependencies}
 \description{
+Run R checks against old and new versions of a package to systematically test for any breaking changes imparted on packages which take said package as a dependency (reverse dependencies). Checks are run in parallel with strategies to minimize dependency installation.
+
 Run R checks against old and new versions of a package to systematically test for any breaking changes imparted on packages which take said package as a dependency (reverse dependencies). Checks are run in parallel with strategies to minimize dependency installation.
 }
 \author{

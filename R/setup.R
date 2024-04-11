@@ -1,11 +1,11 @@
 setup_reversecheck <- function(path) {
   dir_create(path)
   dir_create(path_cache_repo(path))
-  
+
   dir_create(path_lib(path, "cache"))
   dir_create(path_lib(path, "old"))
   dir_create(path_lib(path, "new"))
-  
+
   dir_create(path_logs(path, "cache"))
   dir_create(path_logs(path, "old"))
   dir_create(path_logs(path, "new"))

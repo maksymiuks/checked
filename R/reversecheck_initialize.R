@@ -1,19 +1,33 @@
-reversecheck_initialize <- function(pkg, reversecheck_dir, lib.loc, dependencies,
-                                    repos, dependencies_repos, sampling, minicran_type,
-                                    minicran_filters) {
-  
-  revdeps <- revdeps(pkg, reversecheck_dir, dependencies, repos, sampling)
+reversecheck_initialize <- function(
+    pkg,
+    check_dir,
+    lib.loc,
+    dependencies,
+    repos,
+    dependencies_repos,
+    minicran_type,
+    minicran_filters) {
+  pkg <- check_path_is_pkg_source(pkg)
+  dependencies <- check_dependencies(dependencies)
 
-  install_pkg(pkg, reversecheck_dir, repos, lib.loc)
+  setup_reversecheck(check_dir)
+
+  rdeps <- discover_revdeps_from_dir(check_dir)
+  if (is.null(revdeps)) {
+    rdeps <- revdeps(pkg, dependencies, repos)
+    Map(set_revdep_status, check_dir, rdeps$package, rdeps$status)
+  }
+
+  install_pkg(pkg, check_dir, repos, lib.loc)
   setup_minicran_cache_repo(
-    revdeps = revdeps, 
-    reversecheck_dir = reversecheck_dir, 
-    lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir), 
-    repos = dependencies_repos, 
-    type = minicran_type, 
+    revdeps = revdeps,
+    reversecheck_dir = check_dir,
+    lib.loc = reversecheck_lib_loc(lib.loc, check_dir),
+    repos = dependencies_repos,
+    type = minicran_type,
     filters = minicran_filters
   )
-  
+
   invisible(NULL)
 }
 
@@ -23,7 +37,7 @@ install_pkg <- function(pkg, reversecheck_dir, repos, lib.loc) {
   name <- get_package_name(pkg)
   old <- path_lib(reversecheck_dir, "old")
   new <- path_lib(reversecheck_dir, "new")
-  
+
   if (!is_package_installed(name, old)) {
     p_old <- install_packages(
       pkgs = name,
@@ -38,8 +52,8 @@ install_pkg <- function(pkg, reversecheck_dir, repos, lib.loc) {
 
   if (!is_package_installed(name, new)) {
     p_new <- install_packages(
-      pkgs = pkg, 
-      lib = new, 
+      pkgs = pkg,
+      lib = new,
       lib.loc = lib.loc,
       repos = NULL,
       type = "source",
@@ -48,7 +62,7 @@ install_pkg <- function(pkg, reversecheck_dir, repos, lib.loc) {
       async = TRUE
     )
   }
-  
+
   # Pause until both packages are installed
   while (TRUE) {
     if (exists("p_new") && installation_unsuccessful(p_new)) {
@@ -63,8 +77,7 @@ install_pkg <- function(pkg, reversecheck_dir, repos, lib.loc) {
         "Check logs at ", file.path(path_logs(reversecheck_dir, "new"), "new_callr.log"),
         " - Aborting"
       )
-    }
-    else if (is_package_installed(name, old) && is_package_installed(name, new)) {
+    } else if (is_package_installed(name, old) && is_package_installed(name, new)) {
       break()
     }
     Sys.sleep(1)
