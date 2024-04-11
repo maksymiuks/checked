@@ -19,7 +19,7 @@ path_default <- function() {
 path_cache_repo <- function(path, repos = FALSE) {
   path <- normalizePath(file.path(path, "repo"), mustWork = FALSE)
   if (repos) {
-    paste0("file://", path)
+    paste0("file:///", path)
   } else {
     path
   }

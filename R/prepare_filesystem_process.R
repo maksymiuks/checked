@@ -34,6 +34,8 @@ prepare_filesystem_process <- R6::R6Class(
         )
         
         set_revdep_status(reversecheck_dir, revdep, status = "READY")
+        
+        TRUE
       }
       
       options$args <- list(

@@ -2,7 +2,7 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, lib.loc, repos,
   ap <- utils::available.packages(repos = repos, filters = filters)
   
   pkgs_cache <- suppressWarnings(tryCatch(
-    utils::available.packages(repos = path_cache_repo(reversecheck_dir, TRUE))[, "Package"],
+    utils::available.packages(repos = path_cache_repo(reversecheck_dir, TRUE), type = minicran_pkg_type(type))[, "Package"],
     error = function(e) {
       character(0)
     }))
@@ -19,7 +19,7 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, lib.loc, repos,
     pkg = revdeps$package, 
     availPkgs = ap,
     epos = NULL, 
-    type = "source", 
+    type = type, 
     suggests = TRUE,
     enhances = TRUE
   )
@@ -53,18 +53,24 @@ setup_minicran_cache_repo <- function(revdeps, reversecheck_dir, lib.loc, repos,
   invisible(NULL)
 }
 
-preinstall_dependencies_cache <- function(reversecheck_dir, lib.loc) {
-  pkgs <- utils::available.packages(repos = path_cache_repo(reversecheck_dir, TRUE))[, "Package"]
-  
-  for (pkg in pkgs) {
-    install_packages(
-      pkg,
-      repos = path_cache_repo(reversecheck_dir, TRUE),
-      lib = path_lib(reversecheck_dir, "cache"),
-      # root package has to be installable in native lib.loc hence we do not add cache
-      lib.loc = lib.loc,
-      logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg), "subprocess.log"),
-      keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(pkg))
-    )
+minicran_pkg_type <- function(type) {
+  if (.Platform$pkgType %in% type) {
+    "binary"
+  } else if ("source" %in% type) {
+    "source"
+  } else {
+    stop("Specified minicran_type does not allow proper miniCRAN repository setup. ",
+         sprintf("Consider using `%s`, `source` or both", .Platform$pkgType))
   }
+}
+
+merge_minicran_db <- function(repos, type, lib.loc) {
+  ap <- available.packages(repos = repos, type = type)
+  ip <- installed.packages(lib.loc = lib.loc)
+  
+  rbind(
+    ip[, intersect(colnames(ip), colnames(ap))],
+    ap[, intersect(colnames(ip), colnames(ap))]
+  )
+  
 }

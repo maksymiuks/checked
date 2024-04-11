@@ -1,6 +1,6 @@
 #' @export
 reversecheck <- function(pkg = "./",
-                         reversecheck_dir = "./reversecheck",
+                         reversecheck_dir = file.path(pkg, "reversecheck"),
                          lib.loc = .libPaths(),
                          dependencies = TRUE,
                          n_childs = 1L,
@@ -8,7 +8,7 @@ reversecheck <- function(pkg = "./",
                          dependencies_repos = repos,
                          sampling = NULL,
                          rcmdcheck_params = reversecheck_deafult_rcmd_params(),
-                         minicran_type = "source",
+                         minicran_type = .Platform$pkgType,
                          minicran_filters = NULL,
                          ...) {
   
@@ -39,6 +39,7 @@ reversecheck <- function(pkg = "./",
     n_childs = n_childs,
     repos = repos,
     rcmdcheck_params = rcmdcheck_params,
+    type = minicran_pkg_type(minicran_type),
     ...
   )
   

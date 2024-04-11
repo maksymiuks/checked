@@ -1,9 +1,17 @@
 reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos, 
-                             rcmdcheck_params, ...) {
+                             rcmdcheck_params, type, ...) {
   
   revdeps <- get_revdeps_from_dir(reversecheck_dir)
-  G <- dep_graph_create(revdeps[!revdeps$status %in% c("IN_PROGRESS", "DONE"), "package"])
+  G <- dep_graph_create(
+    revdeps[!revdeps$status %in% c("IN_PROGRESS", "DONE"), "package"],
+    availPkgs = merge_minicran_db(
+      repos = path_cache_repo(reversecheck_dir, TRUE),
+      type = type,
+      lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir)
+    )
+  )
   processes <- list()
+  inf_loop_counter <- 0
   
   while (!scheduler_loop_finished(revdeps, processes)) {
     running_processes <- vlapply(processes, function(p) p$is_alive())
@@ -66,13 +74,23 @@ reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
         lib = path_lib(reversecheck_dir, "cache"), 
         keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(p)),
         repos = path_cache_repo(reversecheck_dir, TRUE),
+        type = type,
         lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir), 
         logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(p), "subprocess.log"),
         async = TRUE
       )
       append(processes, process) 
     } else {
-      warning("WIP: Potential infinite loop warning - add smart detection for that")
+      if (infinite_loop_test(revdeps, processes)) {
+        inf_loop_counter <- inf_loop_counter + 1
+      } else {
+        inf_loop_counter <- 0
+      }
+    
+      
+      if (inf_loop_counter == 30) {
+        stop("Infinite loop detected.")
+      }
       processes
     }
   }
@@ -86,6 +104,14 @@ scheduler_loop_finished <- function(revdeps, processes) {
   finished <- all(vlapply(processes, function(p) !p$is_alive()))
   
   done && finished
+}
+
+infinite_loop_test <- function(revdeps, processes) {
+  any_not_done <- any(revdeps$status != "DONE")
+  finished <- all(vlapply(processes, function(p) !p$is_alive()))
+  
+  any_not_done && finished
+  
 }
 
 ### PLACEHOLDER

@@ -12,10 +12,34 @@ install_packages <- function(
   }
   
   f(function(args) {
+    # Installation
     do.call(utils::install.packages, args)
+    
+    # Verification
+    length(
+      find.package(
+        args$pkgs, 
+        lib.loc = args$lib,
+        quiet = TRUE
+      )
+    ) > 0
   }, 
   args = list(args = args),
   libpath = lib.loc, 
   stdout = logs_path,
   stderr = logs_path)
+}
+
+installation_successful <- function(p) {
+  !p$is_alive() && tryCatch(
+    p$get_result(),
+    error = function(e) FALSE
+  )
+}
+
+installation_unsuccessful <- function(p) {
+  !p$is_alive() && !tryCatch(
+    p$get_result(),
+    error = function(e) FALSE
+  )
 }

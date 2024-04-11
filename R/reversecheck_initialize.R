@@ -25,25 +25,48 @@ install_pkg <- function(pkg, reversecheck_dir, repos, lib.loc) {
   new <- path_lib(reversecheck_dir, "new")
   
   if (!is_package_installed(name, old)) {
-    install_packages(
+    p_old <- install_packages(
       pkgs = name,
       lib = old,
       repos = repos,
       lib.loc = lib.loc,
       logs_path = file.path(path_logs(reversecheck_dir, "old"), "old_callr.log"),
-      keep_outputs = file.path(path_logs(reversecheck_dir, "old"))
+      keep_outputs = file.path(path_logs(reversecheck_dir, "old")),
+      async = TRUE
     )
   }
 
   if (!is_package_installed(name, new)) {
-    install_packages(
+    p_new <- install_packages(
       pkgs = pkg, 
       lib = new, 
       lib.loc = lib.loc,
       repos = NULL,
       type = "source",
       logs_path = file.path(path_logs(reversecheck_dir, "new"), "new_callr.log"),
-      keep_outputs = file.path(path_logs(reversecheck_dir, "new"))
+      keep_outputs = file.path(path_logs(reversecheck_dir, "new")),
+      async = TRUE
     )
+  }
+  
+  # Pause until both packages are installed
+  while (TRUE) {
+    if (exists("p_new") && installation_unsuccessful(p_new)) {
+      stop(
+        "Instalation of the development version of the package failed.\n ",
+        "Check logs at ", file.path(path_logs(reversecheck_dir, "old"), "old_callr.log"),
+        " - Aborting"
+      )
+    } else if (exists("p_old") && installation_unsuccessful(p_old)) {
+      stop(
+        "Instalation of the development version of the package failed.\n ",
+        "Check logs at ", file.path(path_logs(reversecheck_dir, "new"), "new_callr.log"),
+        " - Aborting"
+      )
+    }
+    else if (is_package_installed(name, old) && is_package_installed(name, new)) {
+      break()
+    }
+    Sys.sleep(1)
   }
 }
