@@ -6,10 +6,9 @@ reversecheck <- function(pkg = "./",
                          n_childs = 1L,
                          repos = getOption("repos"),
                          dependencies_repos = repos,
+                         filters = NULL,
                          sampling = NULL,
                          rcmdcheck_params = reversecheck_deafult_rcmd_params(),
-                         minicran_type = .Platform$pkgType,
-                         minicran_filters = NULL,
                          ...) {
   
   pkg <- check_path_is_pkg_source(pkg)
@@ -25,10 +24,7 @@ reversecheck <- function(pkg = "./",
     lib.loc = lib.loc,
     dependencies = dependencies,
     repos = repos,
-    dependencies_repos = dependencies_repos,
     sampling = sampling,
-    minicran_type = minicran_type,
-    minicran_filters = minicran_filters,
     ...
   )
   
@@ -38,8 +34,9 @@ reversecheck <- function(pkg = "./",
     lib.loc = lib.loc,
     n_childs = n_childs,
     repos = repos,
+    dependencies_repos,
+    filters = NULL,
     rcmdcheck_params = rcmdcheck_params,
-    type = minicran_pkg_type(minicran_type),
     ...
   )
   

@@ -1,18 +1,9 @@
 reversecheck_initialize <- function(pkg, reversecheck_dir, lib.loc, dependencies,
-                                    repos, dependencies_repos, sampling, minicran_type,
-                                    minicran_filters) {
+                                    repos, sampling, ...) {
   
   revdeps <- revdeps(pkg, reversecheck_dir, dependencies, repos, sampling)
 
   install_pkg(pkg, reversecheck_dir, repos, lib.loc)
-  setup_minicran_cache_repo(
-    revdeps = revdeps, 
-    reversecheck_dir = reversecheck_dir, 
-    lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir), 
-    repos = dependencies_repos, 
-    type = minicran_type, 
-    filters = minicran_filters
-  )
   
   invisible(NULL)
 }
