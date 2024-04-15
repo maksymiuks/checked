@@ -1,7 +1,7 @@
 #' @importFrom R6 R6Class
 #' @importFrom callr r_process
 prepare_filesystem_process <- R6::R6Class(
-  "revcheck_process",
+  "prepare_filesystem_process",
   inherit = callr::r_process,
   public = list(
     initialize = function(revdep, root, reversecheck_dir, repos, lib.loc, ...) {
