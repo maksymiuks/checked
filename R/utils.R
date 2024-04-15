@@ -40,7 +40,11 @@ check_dependencies <- function(dependencies) {
 }
 
 get_package_name <- function(path) {
-  read.dcf(file.path(path, "DESCRIPTION"))[, "Package"]
+  if (file.exists(file.path(path, "DESCRIPTION"))) {
+    read.dcf(file.path(path, "DESCRIPTION"))[, "Package"]
+  } else {
+    path
+  }
 }
 
 dir_create <- function(path) {
