@@ -1,7 +1,7 @@
 #' @importFrom R6 R6Class
 #' @importFrom callr r_process
 install_packages_process <- R6::R6Class(
-  "ip_process",
+  "install_packages_process",
   inherit = callr::r_process,
   public = list(
     initialize = function(
