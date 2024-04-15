@@ -4,7 +4,12 @@
 \alias{revdeps_graph_create}
 \title{Create Dependency Graph for Reverse Dependencies}
 \usage{
-revdeps_graph_create(pkg, db = available.packages(), which = "strong", ...)
+revdeps_graph_create(
+  pkg,
+  db = utils::available.packages(),
+  which = "strong",
+  ...
+)
 }
 \arguments{
 \item{pkg}{A package whose reverse dependencies should be used as the basis

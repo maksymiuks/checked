@@ -6,11 +6,21 @@
 \alias{dep_graph_which_root_satisfied}
 \title{Find the Next Packages Not Dependent on an Unavailable Package}
 \usage{
-dep_graph_which_satisfied(g, v = igraph::V(g), dependencies = TRUE)
+dep_graph_which_satisfied(
+  g,
+  v = igraph::V(g),
+  dependencies = TRUE,
+  status = "pending"
+)
 
 dep_graph_which_satisfied_strong(..., dependencies = "strong")
 
-dep_graph_which_root_satisfied(g, ..., dependencies = "all")
+dep_graph_which_root_satisfied(
+  g,
+  ...,
+  dependencies = "all",
+  status = "installed"
+)
 }
 \arguments{
 \item{g}{A dependency graph, as produced with \code{\link[=dep_graph_create]{dep_graph_create()}}}

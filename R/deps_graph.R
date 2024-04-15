@@ -11,7 +11,7 @@
 #' @importFrom tools package_dependencies
 revdeps_graph_create <- function(
     pkg,
-    db = available.packages(),
+    db = utils::available.packages(),
     which = "strong",
     ...) {
   revdeps <- unlist(tools::package_dependencies(
@@ -59,7 +59,6 @@ dep_graph_create <- function(pkg, ...) {
 #'
 #' @importFrom igraph vertex_attr neighborhood subgraph.edges permute topo_sort E V
 dep_graph_sort <- function(g) {
-  strong_deps <- c("Depends", "Imports", "LinkingTo")
   roots <- which(igraph::vertex_attr(g, "root"))
 
   # split into neighborhoods by root (revdep)
@@ -79,7 +78,7 @@ dep_graph_sort <- function(g) {
   }
 
   # use only strong dependencies to prioritize by topology (leafs first)
-  strong_edges <- igraph::E(g)[igraph::E(g)$type %in% strong_deps]
+  strong_edges <- igraph::E(g)[igraph::E(g)$type %in% DEPENDENCIES_STRONG]
   g_strong <- igraph::subgraph.edges(g, strong_edges, delete.vertices = FALSE)
   topo <- igraph::topo_sort(g_strong, mode = "in")
   priority_topo <- integer(length(g))

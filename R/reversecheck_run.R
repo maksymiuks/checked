@@ -4,7 +4,7 @@ reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
   revdeps <- get_revdeps_from_dir(reversecheck_dir)
   G <- dep_graph_create(
     revdeps[!revdeps$status %in% c("IN_PROGRESS", "DONE"), "package"],
-    availPkgs = available.packages(repos = dependencies_repos, filters = filters)
+    availPkgs = utils::available.packages(repos = dependencies_repos, filters = filters)
   )
   processes <- list()
   inf_loop_counter <- 0
@@ -114,7 +114,7 @@ revcheck_process <- function(revdep, reversecheck_dir, type, lib.loc) {
   callr::r_bg(function(revdep, reversecheck_dir, type, lib.loc) {
     path <- normalizePath(file.path(path_revdep(reversecheck_dir, revdep), type, "results.csv"), mustWork = FALSE)
     dir_create(dirname(path))
-    write.csv(as.data.frame(installed.packages(lib.loc = lib.loc)), file = path)
+    utils::write.csv(as.data.frame(utils::installed.packages(lib.loc = lib.loc)), file = path)
     if (type == "new") {
       set_revdep_status(reversecheck_dir, revdep, status = "DONE")
     }
