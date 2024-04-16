@@ -1,7 +1,5 @@
 setup_reversecheck <- function(path) {
   dir_create(path)
-  dir_create(path_cache_repo(path))
-
   dir_create(path_lib(path, "cache"))
   dir_create(path_lib(path, "old"))
   dir_create(path_lib(path, "new"))
@@ -14,15 +12,6 @@ setup_reversecheck <- function(path) {
 
 path_default <- function() {
   file.path(tempdir(), utils::packageName())
-}
-
-path_cache_repo <- function(path, repos = FALSE) {
-  path <- normalizePath(file.path(path, "repo"), mustWork = FALSE)
-  if (repos) {
-    paste0("file:///", path)
-  } else {
-    path
-  }
 }
 
 path_lib <- function(path, lib = c("cache", "new", "old")) {

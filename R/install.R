@@ -1,6 +1,7 @@
 install_packages <- function(
     ..., 
-    lib.loc = .libPaths(), 
+    lib.loc = .libPaths(),
+    filters = NULL,
     logs_path = tempfile("reversecheck"),
     async = FALSE) {
   dir_create(dirname(logs_path))
@@ -11,7 +12,8 @@ install_packages <- function(
     callr::r
   }
   
-  f(function(args) {
+  f(function(args, filters) {
+    options(available_packages_filters = filters, timeout = 3600)
     # Installation
     do.call(utils::install.packages, args)
     
@@ -24,7 +26,7 @@ install_packages <- function(
       )
     ) > 0
   }, 
-  args = list(args = args),
+  args = list(args = args, filters = filters),
   libpath = lib.loc, 
   stdout = logs_path,
   stderr = logs_path)

@@ -1,33 +1,10 @@
-reversecheck_initialize <- function(
-    pkg,
-    check_dir,
-    lib.loc,
-    dependencies,
-    repos,
-    dependencies_repos,
-    minicran_type,
-    minicran_filters) {
-  pkg <- check_path_is_pkg_source(pkg)
-  dependencies <- check_dependencies(dependencies)
+reversecheck_initialize <- function(pkg, reversecheck_dir, lib.loc, dependencies,
+                                    repos, sampling, ...) {
+  
+  revdeps <- revdeps(pkg, reversecheck_dir, dependencies, repos, sampling)
 
-  setup_reversecheck(check_dir)
-
-  rdeps <- discover_revdeps_from_dir(check_dir)
-  if (is.null(revdeps)) {
-    rdeps <- revdeps(pkg, dependencies, repos)
-    Map(set_revdep_status, check_dir, rdeps$package, rdeps$status)
-  }
-
-  install_pkg(pkg, check_dir, repos, lib.loc)
-  setup_minicran_cache_repo(
-    revdeps = revdeps,
-    reversecheck_dir = check_dir,
-    lib.loc = reversecheck_lib_loc(lib.loc, check_dir),
-    repos = dependencies_repos,
-    type = minicran_type,
-    filters = minicran_filters
-  )
-
+  install_pkg(pkg, reversecheck_dir, repos, lib.loc)
+  
   invisible(NULL)
 }
 

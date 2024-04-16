@@ -1,14 +1,9 @@
 reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
-                             rcmdcheck_params, type, ...) {
-  pkg <- check_path_is_pkg_source(pkg)
+                             dependencies_repos, filters, rcmdcheck_params, ...) {
   revdeps <- get_revdeps_from_dir(reversecheck_dir)
   G <- dep_graph_create(
     revdeps[!revdeps$status %in% c("IN_PROGRESS", "DONE"), "package"],
-    availPkgs = merge_minicran_db(
-      repos = path_cache_repo(reversecheck_dir, TRUE),
-      type = type,
-      lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir)
-    )
+    availPkgs = available.packages(repos = dependencies_repos, filters = filters)
   )
   processes <- list()
   inf_loop_counter <- 0
@@ -72,8 +67,8 @@ reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
         pkgs = p,
         lib = path_lib(reversecheck_dir, "cache"),
         keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(p)),
-        repos = path_cache_repo(reversecheck_dir, TRUE),
-        type = type,
+        repos = dependencies_repos,
+        filters = filters,
         lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir),
         logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(p), "subprocess.log"),
         async = TRUE
