@@ -9,7 +9,7 @@ report_initialize.reporter_basic_tty <- function(  # nolint
 }
 
 #' @export
-report_status.reporter_basic_tty <- function(reporter, plan) { # nolint
+report_status.reporter_basic_tty <- function(reporter, plan, envir) { # nolint
   cli_theme()
   statuses <- plan$statuses()
   for (i in seq_along(plan$queue)) {

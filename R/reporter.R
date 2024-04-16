@@ -36,6 +36,7 @@ report_initialize <- function(reporter, plan, envir = parent.frame()) {
   UseMethod("report_initialize")
 }
 
+#' @export
 report_status <- function(reporter, plan, envir = parent.frame()) {
   UseMethod("report_status")
 }
