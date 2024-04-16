@@ -63,15 +63,14 @@ reversecheck_run <- function(pkg, reversecheck_dir, lib.loc, n_childs, repos,
       p <- next_packages_install[1]
       G <- dep_graph_set_package_status(G, p, "installing")
 
-      process <- install_packages(
+      process <- install_packages_process$new(
         pkgs = p,
         lib = path_lib(reversecheck_dir, "cache"),
         keep_outputs = file.path(path_logs(reversecheck_dir, "cache"), make.names(p)),
         repos = dependencies_repos,
         filters = filters,
         lib.loc = reversecheck_lib_loc(lib.loc, reversecheck_dir),
-        logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(p), "subprocess.log"),
-        async = TRUE
+        logs_path = file.path(path_logs(reversecheck_dir, "cache"), make.names(p), "subprocess.log")
       )
       append(processes, process)
     } else {
