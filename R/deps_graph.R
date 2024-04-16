@@ -14,14 +14,12 @@ revdeps_graph_create <- function(
     db = utils::available.packages(),
     which = "strong",
     ...) {
-  revdeps <- unlist(tools::package_dependencies(
+  dep_graph_create(unlist(tools::package_dependencies(
     pkg,
     db = db,
     which = which,
     reverse = TRUE
-  ))
-
-  dep_graph_create(revdeps, ...)
+  )), ...)
 }
 
 #' Create Dependency Graph
@@ -34,7 +32,7 @@ revdeps_graph_create <- function(
 #' @importFrom miniCRAN makeDepGraph
 #' @importFrom igraph V
 dep_graph_create <- function(pkg, ...) {
-  statuses <- c("pending", "installing", "installed")
+  statuses <- c("pending", "in progress", "done")
   g <- miniCRAN::makeDepGraph(pkg, ...)
   igraph::V(g)$root <- igraph::V(g)$name %in% pkg
   igraph::V(g)$status <- factor("pending", levels = statuses)
@@ -94,8 +92,8 @@ dep_graph_sort <- function(g) {
 
 #' Find the Next Packages Not Dependent on an Unavailable Package
 #'
-#' While other packages are installing, ensure that the next selected package
-#' already has its dependencies installed.
+#' While other packages are in progress, ensure that the next selected package
+#' already has its dependencies done.
 #'
 #' @param g A dependency graph, as produced with [dep_graph_create()]
 #' @return The name of the next package to prioritize
@@ -111,7 +109,7 @@ dep_graph_which_satisfied <- function(g, v = igraph::V(g), dependencies = TRUE, 
     igraph::incident_edges(g, v, mode = "in"),
     function(edges) {
       edges <- edges[edges$type %in% dependencies]
-      all(igraph::tail_of(g, edges)$status == "installed")
+      all(igraph::tail_of(g, edges)$status == "done")
     }
   )
   names(deps_met[deps_met])
@@ -125,7 +123,7 @@ dep_graph_which_satisfied_strong <- function(..., dependencies = "strong") { # n
 
 #' @describeIn dep_graph_which_satisfied
 #' List root vertices whose dependencies are all satisfied
-dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all", status = "installed") {
+dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all", status = "done") {
   dep_graph_which_satisfied(
     g,
     igraph::V(g)[igraph::V(g)$root],
@@ -136,18 +134,18 @@ dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all", status 
 }
 
 dep_graph_set_package_status <- function(G, v, status) {
-  igraph::set_vertex_attr(G, "status", v, factor(status, levels = c("pending", "installing", "installed")))
+  igraph::set_vertex_attr(G, "status", v, factor(status, levels = c("pending", "in progress", "done")))
 }
 
 dep_graph_is_dependency <- function(G, v) {
-   length(igraph::adjacent_vertices(G, v, "out")[[v]]) > 0
+  length(igraph::adjacent_vertices(G, v, "out")[[v]]) > 0
 }
 
-dep_graph_update_installed <- function(G, lib.loc) {
+dep_graph_update_done <- function(G, lib.loc) {
   V <- igraph::V(G)
-  
-  which_installed <- which(vlapply(V$name, function(p) {
-    is_package_installed(p, lib.loc)
+
+  which_done <- which(vlapply(V$name, function(p) {
+    is_package_done(p, lib.loc)
   }))
-  dep_graph_set_package_status(G, V[which_installed], "installed")
+  dep_graph_set_package_status(G, V[which_done], "done")
 }
