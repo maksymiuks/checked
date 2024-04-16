@@ -1,48 +1,71 @@
-new_plan <- function(x) {
-  checkmate::assert_data_frame(x)
+new_check_design <- function(...) {
+  check_design$new(...)
+}
+
+new_rev_dep_check_design <- function(x, ...) {
+  tasks <- rev_dep_check_tasks_df(x)
+  new_check_design(tasks, ...)
+}
+
+check_design <- R6::R6Class(
+  "check_design",
+  public = list(
+    # <NULL,igraph>
+    graph = NULL,
+    # <data.frame>
+    tasks = data.frame(
+      alias = character(0L), # a display name for the task
+      type = character(0L), # a task type
+      package = character(0L), # package name
+      version = package_version(NA, strict = FALSE)[c()], # package version
+      cmd = list(), # command to issue in a separate process
+      process = list() # process enum, or processx process object
+    ),
+    initialize = function(x, ...) {
+      tasks <- new_check_tasks_df(x, ...)
+      self$graph <- dep_graph_create(tasks$package)
+      tasks <- tasks[order(match(tasks$package, igraph::V(self$graph)$name)), ]
+      rownames(tasks) <- NULL
+      self$tasks <- tasks
+    }
+  ),
+)
+
+new_check_tasks_df <- function(x) {
   req_cols <- c("alias", "type", "package", "version", "cmd")
+
+  checkmate::assert_data_frame(x)
   checkmate::assert_names(names(x), must.include = req_cols)
 
   # clean up data frame structure
   x <- x[c(req_cols, setdiff(colnames(x), req_cols))]
   rownames(x) <- NULL
 
-  # add status
+  # add process indicator
   if (is.null(x$process)) {
     x$process <- list("todo")
   } else {
     x$process[which(is.na(x$process))] <- list("todo")
   }
 
-  # build dependency graph
-  packages <- unique(unlist(lapply(x$metadata, `[[`, "package")))
-  g <- dep_graph_create(packages)
+  # reorder columns for consistency
+  x <- x[, c(req_cols, setdiff(colnames(x), req_cols))]
 
-  # re-order tasks data frame by minimum installation order
-  x <- x[order(match(x$package, igraph::V(g)$name)), ]
-
-  e <- new.env(parent = baseenv())
-  e$tasks <- x
-  e$graph <- g
-
-  structure(e, class = unique(c("plan", class(e))))
+  x
 }
 
 #' @export
-print.plan <- function(x, ...) {
+print.check_design <- function(x, ...) {
   print(x$tasks)
 }
 
 #' @export
-plan <- function(x) {
-  UseMethod("plan")
+as_check_tasks_df <- function(x) {
+  UseMethod("as_check_tasks_df")
 }
 
 #' @export
-plan.default <- new_plan
-
-#' @export
-plan.character <- function(x, ...) {
+as_check_tasks_df.character <- function(x, ...) {
   package <- x
   version <- available.packages()[package, "Version"]
   args <- list(...)
@@ -56,8 +79,7 @@ plan.character <- function(x, ...) {
   )
 
   df$cmd <- rep_len(list(args), length(package))
-
-  new_plan(df)
+  new_check_tasks_df(df)
 }
 
 #' Build Plan for Checking Reverse Dependencies from Package Source
@@ -65,7 +87,7 @@ plan.character <- function(x, ...) {
 #' @param path A file path to a local package source code directory of the
 #'   package whose reverse dependencies are to be checked.
 #' @param output A file path to a directory in which logs and other check
-#'   metadata should be saved.
+#'   metadata should be saved. Defaults to a new temporary directory.
 #' @param ... Additional arguments passed to individual
 #'   [`rcmdcheck::rcmdcheck`] calls
 #' @param restore Whether existing logs in `output` should be used to try to
@@ -73,7 +95,7 @@ plan.character <- function(x, ...) {
 #'   that you should be prompted to confirm. Otherwise, a logical value
 #'   indicates whether to restore from or overwrite the existing logs.
 #'
-#' @return A checks plan
+#' @return A check plan
 #'
 #' @examples
 #' \dontrun{
@@ -83,9 +105,9 @@ plan.character <- function(x, ...) {
 #'
 #' @importFrom tools package_dependencies
 #' @export
-rev_dep_check_plan <- function(
+rev_dep_check_tasks_df <- function(
     path,
-    output,
+    output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
     ...,
     restore) {
   path <- check_path_is_pkg_source(path)
@@ -95,7 +117,7 @@ rev_dep_check_plan <- function(
   restored_statuses <- rev_dep_attempt_restore(output, restore)
 
   # build reverse dependencies data frame
-  df_dev <- df_rel <- plan(revdeps, ...)$tasks
+  df_dev <- df_rel <- as_check_tasks_df(revdeps, ...)
   df_dev$alias <- paste0(df_dev$alias, " (+", package, "_dev)")
   df_rel$alias <- paste0(df_rel$alias, " (+", package, "_v", package_v, ")")
   idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
@@ -103,11 +125,7 @@ rev_dep_check_plan <- function(
   df$process <- restored_statuses[match(df$alias, names(restored_statuses))]
 
   # re-structure data frame as a plan object
-  plan <- new_plan(df)
-  class(plan) <- c("rev_dep_plan", class(plan))
-  plan$src <- path
-
-  plan
+  new_check_tasks_df(df)
 }
 
 #' Attempt to Recover Previous Run State
