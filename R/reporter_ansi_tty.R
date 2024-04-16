@@ -37,7 +37,7 @@ report_initialize.reporter_ansi_tty <- function(  # nolint
 }
 
 #' @export
-report_status.reporter_ansi_tty <- function(reporter, plan) { # nolint
+report_status.reporter_ansi_tty <- function(reporter, plan, envir) { # nolint
   statuses <- plan$statuses()
   active <- which(statuses == 2)
   n_char_titles <- max(viapply(plan$queue, function(i) nchar(i$name)))
