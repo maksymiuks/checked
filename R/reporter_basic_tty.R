@@ -5,7 +5,7 @@ report_initialize.reporter_basic_tty <- function(  # nolint
     envir = parent.frame()) {
   reporter$time_start <- Sys.time()
   reporter$statuses <- new.env(parent = emptyenv())
-  cli::cli_text("<", packageName(), "> Checks")
+  cli::cli_text("<", utils::packageName(), "> Checks")
 }
 
 #' @export

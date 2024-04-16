@@ -73,7 +73,7 @@ get_revdep_source <- function(revdep, repos, destdir) {
   bn <- basename(archive_url)
   dir_create(tmpdir <- file.path(tempfile("reversecheck_"), revdep))
   destfile <- file.path(tmpdir, bn)
-  download.file(archive_url, destfile = destfile)
-  untar(destfile, exdir = normalizePath(destdir))
+  utils::download.file(archive_url, destfile = destfile)
+  utils::untar(destfile, exdir = normalizePath(destdir))
   archive_url
 }
