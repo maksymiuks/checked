@@ -4,7 +4,7 @@
 \alias{dep_graph_neighborhoods}
 \title{Find Dependency Neighborhood}
 \usage{
-dep_graph_neighborhoods(g, names)
+dep_graph_neighborhoods(g, nodes)
 }
 \arguments{
 \item{g}{A dependency graph, as produced with \code{\link[=dep_graph_create]{dep_graph_create()}}}

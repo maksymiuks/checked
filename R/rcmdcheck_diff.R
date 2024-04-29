@@ -98,8 +98,8 @@ rcmdcheck_to_json <- function(rcheck, file = NULL) {
     force = TRUE # This is crucial to skip any environments in the rcheck object
   )
 
-  if (!is.null(path)) {
-    jsonlite::write_json(json, path)
+  if (!is.null(file)) {
+    jsonlite::write_json(json, file)
   }
 
   json
@@ -108,7 +108,6 @@ rcmdcheck_to_json <- function(rcheck, file = NULL) {
 
 rcmdcheck_from_json <- function(file) {
   checkmate::assert_file_exists(file, access = "r")
-
   structure(
     jsonlite::fromJSON(file),
     class = "rcmdcheck"
