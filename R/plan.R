@@ -9,7 +9,7 @@ new_rev_dep_check_design <- function(x, ...) {
 
 #' @examples
 #' package_source_dir <- "../praise"
-#' x <- new_rev_dep_check_design(package_source_dir, n = 10L)
+#' x <- new_rev_dep_check_design(package_source_dir, n = 2L)
 #' while (any(x$checks$process != "done")) {
 #'   while (x$step()) {}
 #'   cat("Processes: \n")
@@ -31,7 +31,7 @@ check_design <- R6::R6Class(
       alias = character(0L), # a display name for the task
       type = character(0L), # a task type
       package = character(0L), # package name
-      version = package_version(NA, strict = FALSE)[c()], # package version
+      version = package_version("", strict = FALSE)[c()], # package version
       cmd = list(), # command to issue in a separate process
       process = list() # process enum, or processx process object
     ),
@@ -68,11 +68,14 @@ check_design <- R6::R6Class(
       })
       if (length(ready_indices) > 0) {
         idx <- head(ready_indices, 1L)
+        package <- self$checks[[idx, "package"]]
         alias <- self$checks[[idx, "alias"]]
 
         process <- mock_process$new(runif(1, 15, 25)) # fake process, lasts ~20s
+        deps <- dep_graph_neighborhoods(self$graph, package)
+        dep_libs <- path_package_libs(private$output, package)
         # this process needs to:
-        #   - acquire source code of package to check
+        #   - set up libpaths
         #   - set up appropriate, restricted library, linking to cache
         #   - run r cmd check
 
@@ -85,9 +88,15 @@ check_design <- R6::R6Class(
       if (length(next_dep_install) > 0) {
         package <- head(next_dep_install, 1L)
 
-        process <- mock_process$new(runif(1, 1, 3)) # fake process, lasts ~2s
-        # this process needs to:
-        #   - install a package into the shared cache library
+        # build libpaths for install process
+        cur_libs <- path_package_libs(private$output)
+        new_lib <- path_package_libs(private$output, package, create = TRUE)
+        process <- install_packages_process$new(
+          package,
+          lib = new_lib,
+          libpaths = cur_libs,
+          log = path_package_install_log(private$output, package)
+        )
 
         success <- self$push_install_process(package, process)
         return(success)
@@ -110,6 +119,7 @@ check_design <- R6::R6Class(
       graph_idx <- which(igraph::V(self$graph)$name == package)
       igraph::vertex_attr(self$graph, "status", graph_idx) <- "in progress"
       x$set_finalizer(function(process) {
+        print(paste0("install of ", alias, " ended with status ", process$get_exit_status()))
         self$pop_process(alias)
         igraph::vertex_attr(self$graph, "status", graph_idx) <- "done"
       })

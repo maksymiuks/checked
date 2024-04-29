@@ -1,5 +1,6 @@
 #' @export
-report_initialize.reporter_basic_tty <- function(  # nolint
+report_initialize.reporter_basic_tty <- function(
+    # nolint
     reporter,
     plan,
     envir = parent.frame()) {
@@ -20,11 +21,11 @@ report_status.reporter_basic_tty <- function(reporter, plan, envir) { # nolint
     plan$queue[[i]]$process$poll_output()
     name <- plan$queue[[i]]$name
     if (!identical(statuses[[i]], reporter$statuses[[name]])) {
-      status <- switch(statuses[[i]],  # nolint
+      status <- switch(statuses[[i]], # nolint
         "1" = "queued",
         "2" = cli::cli_fmt(cli::cli_text("started")),
         "3" = {
-          dur <- plan$queue[[i]]$process$get_duration()  # nolint
+          dur <- plan$queue[[i]]$process$get_duration() # nolint
           ewn <- c("ERROR", "WARNING", "NOTE")
           ewn <- plan$queue[[i]]$process$get_status_counts()[ewn]
           cli::cli_fmt(cli::cli_text(

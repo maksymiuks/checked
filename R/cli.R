@@ -1,14 +1,20 @@
 cli_table_row <- function(
-  status, ok = "OK", notes = "N", warnings = "W", errors = "E", msg = "",
-  title = FALSE
-) {
+    status, ok = "OK", notes = "N", warnings = "W", errors = "E", msg = "",
+    title = FALSE) {
   cli_theme()
   status <- trimws(as.character(status))
   status <- switch(status,
-    "1" = , "2" = , "OK" = , "3" = , "NONE" = cli::format_inline("{.success ✓}"),
-    "4" = , "NOTE" = cli::format_inline("{.note !}"),
-    "5" = , "WARNING" = cli::format_inline("{.warn ?}"),
-    "6" = , "ERROR" = cli::format_inline("{.err ⨯}"),
+    "1" = ,
+    "2" = ,
+    "OK" = ,
+    "3" = ,
+    "NONE" = cli::format_inline("{.success ✓}"),
+    "4" = ,
+    "NOTE" = cli::format_inline("{.note !}"),
+    "5" = ,
+    "WARNING" = cli::format_inline("{.warn ?}"),
+    "6" = ,
+    "ERROR" = cli::format_inline("{.err ⨯}"),
     if (title) cli::col_none(cli::style_bold(status)) else status
   )
 

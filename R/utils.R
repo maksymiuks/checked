@@ -1,8 +1,39 @@
 #' @import cli
 "_PACKAGE"
 
-DEPENDENCIES <- c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances") # nolint
-DEPENDENCIES_STRONG <- DEPENDENCIES[1:3] # nolint
+enum <- function(...) {
+  x <- c(...)
+  f <- factor(x, levels = x)
+  names(f) <- levels(f)
+  lapply(f, identity)
+}
+
+Ops.factor <- function(e1, e2) {
+  switch(.Generic, # nolint
+    ">" = as.numeric(e1) > as.numeric(e2),
+    ">=" = as.numeric(e1) > as.numeric(e2),
+    "==" = as.numeric(e1) > as.numeric(e2),
+    "<" = as.numeric(e1) > as.numeric(e2),
+    "<=" = as.numeric(e1) > as.numeric(e2),
+    NextMethod()
+  )
+}
+
+STATUS <- enum( # nolint
+  "pending",
+  "in progress",
+  "done"
+)
+
+DEP <- enum( # nolint
+  "Enhances",
+  "Suggests",
+  "Imports",
+  "Depends",
+  "LinkingTo"
+)
+
+DEP_STRONG <- unlist(DEP[1:3]) # nolint
 
 check_path_is_pkg_source <- function(pkg) {
   checkmate::assert_string(pkg)
@@ -16,11 +47,11 @@ check_dependencies <- function(dependencies) {
   is_strong <- length(dependencies) == 1 && is.na(dependencies)
 
   dependencies <- if (dependencies == "all" || is_all) {
-    DEPENDENCIES
+    as.character(unlist(DEP))
   } else if (dependencies == "strong" || is_strong) {
-    DEPENDENCIES_STRONG
+    as.character(unlist(DEP_STRONG))
   } else if (is.character(dependencies)) {
-    valid_deps <- dependencies %in% DEPENDENCIES
+    valid_deps <- dependencies %in% unlist(DEP)
     if (!all(valid_deps)) {
       warning(
         "Passed dependencies names does not match standard R dependencies ",

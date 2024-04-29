@@ -1,6 +1,6 @@
 Package: reversecheck
 Title: Systematically Run R Checks Against Reverse Dependencies
-Version: 0.0.0.9000
+Version: 1.0.0.9000
 Authors@R:
     c(
       person(
@@ -33,7 +33,7 @@ Imports:
     miniCRAN,
     R6,
     rcmdcheck,
-	  utils (>= 3.6.2)
+    utils (>= 3.6.2)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Suggests: 
