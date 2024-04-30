@@ -16,6 +16,7 @@ install_packages_process <- R6::R6Class(
     },
     set_finalizer = function(callback) {
       private$finalize_callback <- callback
+      if (!self$is_alive()) callback()
     },
     finalize = function() {
       if (is.function(f <- private$finalize_callback)) f(self)

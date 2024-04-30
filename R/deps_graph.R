@@ -108,7 +108,12 @@ dep_graph_neighborhoods <- function(g, nodes) {
 #' @return The name of the next package to prioritize
 #'
 #' @importFrom igraph incident_edges tail_of
-dep_graph_which_satisfied <- function(g, v = igraph::V(g), dependencies = TRUE, status = "pending") { # nolint
+dep_graph_which_satisfied <- function(
+    g,
+    v = igraph::V(g),
+    dependencies = TRUE,
+    status = "pending") {
+  if (is.character(status)) status <- STATUS[[status]]
   dependencies <- check_dependencies(dependencies)
   if (length(status) > 0) {
     idx <- v$status %in% status
@@ -118,7 +123,10 @@ dep_graph_which_satisfied <- function(g, v = igraph::V(g), dependencies = TRUE, 
     igraph::incident_edges(g, v, mode = "in"),
     function(edges) {
       edges <- edges[edges$type %in% dependencies]
-      all(igraph::tail_of(g, edges)$status == STATUS$done)
+      edges <<- edges
+      # for whatever reason, factors in igraph ARE NOT equivalent to R factors
+      # we convert to character to avoid this problem
+      all(as.character(igraph::tail_of(g, edges)$status) == as.character(STATUS$done))
     }
   )
   names(deps_met[deps_met])
@@ -132,7 +140,11 @@ dep_graph_which_satisfied_strong <- function(..., dependencies = "strong") { # n
 
 #' @describeIn dep_graph_which_satisfied
 #' List root vertices whose dependencies are all satisfied
-dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all", status = "done") {
+dep_graph_which_root_satisfied <- function(
+    g,
+    ...,
+    dependencies = "all",
+    status = "done") {
   dep_graph_which_satisfied(
     g,
     igraph::V(g)[igraph::V(g)$root],
@@ -143,6 +155,7 @@ dep_graph_which_root_satisfied <- function(g, ..., dependencies = "all", status 
 }
 
 dep_graph_set_package_status <- function(g, v, status) {
+  if (is.character(status)) status <- STATUS[[status]]
   igraph::set_vertex_attr(g, "status", v, status)
 }
 
@@ -153,5 +166,5 @@ dep_graph_is_dependency <- function(g, v) {
 dep_graph_update_done <- function(g, lib.loc) {
   v <- igraph::V(g)
   which_done <- which(vlapply(v$name, is_package_done, lib.loc = lib.loc))
-  dep_graph_set_package_status(g, V[which_done], "done")
+  dep_graph_set_package_status(g, V[which_done], STATUS$done)
 }

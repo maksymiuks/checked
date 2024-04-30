@@ -4,7 +4,7 @@ mock_process <- R6::R6Class(
   "mock_process",
   inherit = callr::r_process,
   public = list(
-    initialize = function(n, ...) {
+    initialize = function(n, ..., class = c()) {
       library(callr)
       options <- formals(callr::r_bg)
       options <- options[vlapply(options, `!=`, bquote())]
@@ -13,6 +13,7 @@ mock_process <- R6::R6Class(
       options$load_hook <- callr:::default_load_hook()
       options$func <- function(n) Sys.sleep(n)
       options$args <- list(n = n)
+      class(self) <- c(class, class(self))
       super$initialize(options = options)
     },
     set_finalizer = function(callback) {
