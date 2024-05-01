@@ -10,14 +10,11 @@ reversecheck <- function(pkg = "./",
                          sampling = NULL,
                          rcmdcheck_params = reversecheck_deafult_rcmd_params(),
                          ...) {
-  
   pkg <- check_path_is_pkg_source(pkg)
   dependencies <- check_dependencies(dependencies)
   checkmate::assert_function(sampling, null.ok = TRUE)
   checkmate::assert_character(rcmdcheck_params, null.ok = TRUE)
-  
-  setup_reversecheck(reversecheck_dir)
-  
+
   reversecheck_initialize(
     pkg = pkg,
     reversecheck_dir = reversecheck_dir,
@@ -27,11 +24,9 @@ reversecheck <- function(pkg = "./",
     sampling = sampling,
     ...
   )
-  
+
   reversecheck_run(
-    pkg = pkg,
-    reversecheck_dir = reversecheck_dir,
-    lib.loc = lib.loc,
+    ...,
     n_childs = n_childs,
     repos = repos,
     dependencies_repos,
@@ -39,13 +34,13 @@ reversecheck <- function(pkg = "./",
     rcmdcheck_params = rcmdcheck_params,
     ...
   )
-  
-#  reversecheck_report()
-  
+
+  #  reversecheck_report()
+
   invisible(NULL)
 }
 
 
-reversecheck_deafult_rcmd_params <- function() {
+reversecheck_deafult_rcmdcheck_args <- function() {
   c()
 }

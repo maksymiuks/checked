@@ -1,3 +1,3 @@
 reversecheck_report <- function() {
-  
+
 }

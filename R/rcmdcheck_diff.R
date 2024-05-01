@@ -3,9 +3,9 @@ ISSUES_TYPES <- c("notes", "warnings", "errors")
 diff.rcmdcheck <- function(new, old, issues = ISSUES_TYPES, ...) {
   checkmate::assert_class(old, "rcmdcheck")
   issues <- match.arg(issues, ISSUES_TYPES, several.ok = TRUE)
-  
+
   structure(
-    lapply(issues, function (i) {
+    lapply(issues, function(i) {
       new_i <- structure(
         new[[i]],
         names = get_issue_header(new[[i]])
@@ -14,10 +14,10 @@ diff.rcmdcheck <- function(new, old, issues = ISSUES_TYPES, ...) {
         old[[i]],
         names = get_issue_header(old[[i]])
       )
-      
+
       matching_headers_idx <- names(new_i) %in% names(old_i)
       matching_messages_idx <- new_i %in% old_i
-      
+
       new_issues <- structure(
         unname(new_i[!matching_headers_idx]),
         class = "issues"
@@ -30,7 +30,7 @@ diff.rcmdcheck <- function(new, old, issues = ISSUES_TYPES, ...) {
         ),
         class = "potential_issues"
       )
-      
+
       list("issues" = new_issues, "potential_issues" = new_potential_issues)
     }),
     names = issues,
@@ -48,7 +48,7 @@ print.rcmdcheck_diff <- function(x, ...) {
     } else {
       "OK"
     }
-    
+
     cat(sprintf("%s: %s", i, status), "\n")
     print(x[[i]]$issues)
     print(x[[i]]$potential_issues)
@@ -79,7 +79,7 @@ diff_collection <- function(new, old, issues) {
 }
 
 aggregate.diff_collection <- function(x, ...) {
-  
+
 }
 
 get_issue_header <- function(x) {
@@ -90,25 +90,24 @@ get_issue_header <- function(x) {
 
 rcmdcheck_to_json <- function(rcheck, file = NULL) {
   checkmate::assert_class(rcheck, "rcmdcheck")
-  
+
   json <- jsonlite::toJSON(
     unclass(rcheck),
     auto_unbox = TRUE,
     pretty = TRUE,
     force = TRUE # This is crucial to skip any environments in the rcheck object
   )
-  
-  if (!is.null(path)) {
-    jsonlite::write_json(json, path)
+
+  if (!is.null(file)) {
+    jsonlite::write_json(json, file)
   }
-  
+
   json
 }
 
 
 rcmdcheck_from_json <- function(file) {
   checkmate::assert_file_exists(file, access = "r")
-  
   structure(
     jsonlite::fromJSON(file),
     class = "rcmdcheck"

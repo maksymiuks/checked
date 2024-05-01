@@ -1,4 +1,4 @@
-#' Various utilities for formatting ANSI output 
+#' Various utilities for formatting ANSI output
 #' @name ansi
 NULL
 

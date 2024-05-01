@@ -16,8 +16,8 @@ RE_CHECK <- paste0(
 
 #' @importFrom R6 R6Class
 #' @importFrom rcmdcheck rcmdcheck_process
-revcheck_process <- R6::R6Class(
-  "revcheck_process",
+check_process <- R6::R6Class(
+  "check_process",
   inherit = rcmdcheck::rcmdcheck_process,
   active = list(
     checks = function() {
@@ -38,6 +38,13 @@ revcheck_process <- R6::R6Class(
       )
 
       super$initialize(...)
+    },
+    set_finalizer = function(callback) {
+      private$finalize_callback <- callback
+    },
+    finalize = function() {
+      if (is.function(f <- private$finalize_callback)) f(self)
+      if ("finalize" %in% ls(super)) super$finalize()
     },
     get_time_last_check_start = function() {
       private$time_last_check_start
@@ -136,7 +143,8 @@ revcheck_process <- R6::R6Class(
     parsed_checks = factor(levels = c("", "NONE", "OK", "NOTE", "WARNING", "ERROR")),
     parsed_partial_check_output = "",
     throttle = NULL,
-    spinners = NULL
+    spinners = NULL,
+    finalize_callback = NULL
   )
 )
 

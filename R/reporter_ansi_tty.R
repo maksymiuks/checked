@@ -1,10 +1,11 @@
 #' @export
-report_sleep.reporter_ansi_tty <- function(reporter, plan, sleep = 0.1) {  # nolint
+report_sleep.reporter_ansi_tty <- function(reporter, plan, sleep = 0.1) { # nolint
   Sys.sleep(sleep)
 }
 
 #' @export
-report_initialize.reporter_ansi_tty <- function(  # nolint
+report_initialize.reporter_ansi_tty <- function(
+    # nolint
     reporter,
     plan,
     envir = parent.frame()) {
@@ -16,7 +17,7 @@ report_initialize.reporter_ansi_tty <- function(  # nolint
   cli::ansi_hide_cursor()
   do.call(
     on.exit,
-    list(quote(cli::ansi_show_cursor()), add = TRUE), 
+    list(quote(cli::ansi_show_cursor()), add = TRUE),
     envir = envir
   )
 

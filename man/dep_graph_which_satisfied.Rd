@@ -15,12 +15,7 @@ dep_graph_which_satisfied(
 
 dep_graph_which_satisfied_strong(..., dependencies = "strong")
 
-dep_graph_which_root_satisfied(
-  g,
-  ...,
-  dependencies = "all",
-  status = "installed"
-)
+dep_graph_which_root_satisfied(g, ..., dependencies = "all", status = "done")
 }
 \arguments{
 \item{g}{A dependency graph, as produced with \code{\link[=dep_graph_create]{dep_graph_create()}}}
@@ -29,8 +24,8 @@ dep_graph_which_root_satisfied(
 The name of the next package to prioritize
 }
 \description{
-While other packages are installing, ensure that the next selected package
-already has its dependencies installed.
+While other packages are in progress, ensure that the next selected package
+already has its dependencies done.
 }
 \section{Functions}{
 \itemize{

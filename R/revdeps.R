@@ -1,26 +1,21 @@
-get_revdeps_from_dir <- function(reversecheck_dir) {
-  revdeps_dir <- path_revdeps(reversecheck_dir)
+discover_revdeps_from_dir <- function(path) {
+  revdeps_dir <- path_revdeps(path)
   revdeps <- list.dirs(revdeps_dir, recursive = FALSE, full.names = FALSE)
-  
+
+  if (length(revdeps) == 0L) {
+    return(NULL)
+  }
+
   data.frame(
     package = revdeps,
-    status = vapply(revdeps, function(r) {
-      get_revdep_status(reversecheck_dir, r)
-    }, FUN.VALUE = character(1))
+    status = vcapply(revdeps, get_revdep_status, path = path)
   )
 }
 
-revdeps <- function(pkg, reversecheck_dir, dependencies, repos, sampling) {
-  
-  recovered_revdeps <- get_revdeps_from_dir(reversecheck_dir)
-  
-  if (NROW(recovered_revdeps) > 0) {
-    return(recovered_revdeps)
-  }
-  
+revdeps <- function(pkg, reversecheck_dir, dependencies, repos) {
   ap <- utils::available.packages(repos = repos)
   ap[is.na(ap)] <- ""
-  
+
   revdeps_by_type <- lapply(dependencies, function(dep) {
     idx <- grepl(sprintf("(,| |\\n|^)(%s)(,| |\\n|$)", get_package_name(pkg)), ap[, dep])
     if (any(idx)) {
@@ -39,18 +34,11 @@ revdeps <- function(pkg, reversecheck_dir, dependencies, repos, sampling) {
       )
     }
   })
-  
+
   revdeps <- do.call(rbind, revdeps_by_type)
-  
-  revdeps <- if (!is.null(sampling)) {
-    sampling(revdeps)
-  } else {
-    revdeps
-  }
-  
   apply(revdeps, 1, function(x) {
     set_revdep_status(reversecheck_dir, x["package"], status = x["status"])
   })
-  
+
   revdeps
 }
