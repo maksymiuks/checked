@@ -124,8 +124,6 @@ dep_graph_which_satisfied <- function(
     function(edges) {
       edges <- edges[edges$type %in% dependencies]
       edges <<- edges
-      # for whatever reason, factors in igraph ARE NOT equivalent to R factors
-      # we convert to character to avoid this problem
       all(igraph::tail_of(g, edges)$status == STATUS$done)
     }
   )
