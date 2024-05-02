@@ -5,10 +5,9 @@ mock_process <- R6::R6Class(
   inherit = callr::r_process,
   public = list(
     initialize = function(n, ..., class = c()) {
-      library(callr)
       options <- formals(callr::r_bg)
       options <- options[vlapply(options, `!=`, bquote())]
-      options <- lapply(options, eval)
+      options <- lapply(options, eval, envir = getNamespace("callr"))
       options$extra <- list()
       options$load_hook <- callr:::default_load_hook()
       options$func <- function(n) Sys.sleep(n)

@@ -56,9 +56,18 @@ check_process <- R6::R6Class(
     get_time_finish = function() {
       private$time_finish
     },
-    get_status_counts = function() {
+    get_checks = function() {
       self$poll_output()
-      table(private$parsed_checks)
+      private$parsed_checks
+    },
+    spin = function() {
+      if (length(private$parsed_checks) == 0) {
+        private$spinners[["starting"]]$spin()
+      } else if (self$is_alive()) {
+        private$spinners[["check"]]$spin()
+      } else {
+        ""
+      }
     },
     poll_output = function() {
       if (private$throttle()) {
@@ -91,50 +100,6 @@ check_process <- R6::R6Class(
         # the final check was fully parsed
         private$parsed_partial_check_output <- ""
       }
-    },
-    cli_status_line = function(width = cli::console_width()) {
-      self$poll_output()
-      check_codes <- as.numeric(private$parsed_checks)
-
-      # runtime of process
-      process_time <- paste0(format_time(self$get_duration()), " ")
-
-      # runtime of current check (only displayed if >30s)
-      check_time <- Sys.time() - self$get_time_last_check_start()
-      if (length(check_time) == 0 || check_time < difftime(30, 0)) {
-        check_time <- ""
-      } else {
-        check_time <- cli::col_grey("(", format_time(check_time), ") ")
-      }
-
-      msg <- ""
-      status <- max(check_codes, -1)
-      if (length(private$parsed_checks) == 0) {
-        # have not hit checks yet
-        msg <- "starting ..."
-        status <- private$spinners[["starting"]]$spin()
-      } else if (self$is_alive()) {
-        # processing checks
-        msg <- paste("checking", names(tail(private$parsed_checks, 1)), "...")
-        status <- private$spinners[["check"]]$spin()
-        process_time <- cli::col_cyan(process_time)
-      } else {
-        # done
-        process_time <- cli::col_grey(process_time)
-      }
-
-      msg <- cli::format_inline("{process_time}{check_time}{msg}")
-      counts <- self$get_status_counts()
-      out <- cli_table_row(
-        status = status,
-        ok = counts[["NONE"]] + counts[["OK"]],
-        notes = counts[["NOTE"]],
-        warnings = counts[["WARNING"]],
-        errors = counts[["ERROR"]],
-        msg
-      )
-
-      cli::ansi_substring(out, 1, width)
     }
   ),
   private = list(

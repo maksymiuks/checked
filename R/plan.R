@@ -90,7 +90,7 @@ check_design <- R6::R6Class(
         package <- self$checks[[idx, "package"]]
         alias <- self$checks[[idx, "alias"]]
 
-        process <- mock_process$new(runif(1, 15, 25)) # fake process, lasts ~20s
+        # process <- mock_process$new(runif(1, 15, 25), class = "revdep_process") # fake process, lasts ~20s
         deps <- dep_graph_neighborhoods(self$graph, package)
         dep_libs <- path_package_libs(private$output, package)
         # this process needs to:
@@ -106,6 +106,7 @@ check_design <- R6::R6Class(
       next_dep_install <- dep_graph_which_satisfied_strong(self$graph)
       if (length(next_dep_install) > 0) {
         package <- head(next_dep_install, 1L)
+
         process <- mock_process$new(runif(1, 0.5, 1.0), class = "install_package_process") # fake process, lasts ~0.5s
 
         # build libpaths for install process

@@ -4,8 +4,51 @@ format_status_line_ansi <- function(process, ...) {
 }
 
 #' @export
-format_status_line_ansi.default <- function(process, ...) {
-  format(process, ...)
+format_status_line_ansi.revdep_process <- function(
+    process,
+    ...,
+    width = getOption("width", 80L)) {
+  check_codes <- as.numeric(process$get_checks())
+
+  # runtime of process
+  process_time <- paste0(format_time(process$get_duration()), " ")
+
+  # runtime of current check (only displayed if >30s)
+  check_time <- Sys.time() - process$get_time_last_check_start()
+  if (length(check_time) == 0 || check_time < difftime(30, 0)) {
+    check_time <- ""
+  } else {
+    check_time <- cli::col_grey("(", format_time(check_time), ") ")
+  }
+
+  msg <- ""
+  status <- max(check_codes, -1)
+  if (length(check_codes) == 0) {
+    # have not hit checks yet
+    msg <- "starting ..."
+    status <- process$spin()
+  } else if (process$is_alive()) {
+    # processing checks
+    msg <- paste("checking", names(tail(check_codes, 1)), "...")
+    status <- process$spin()
+    process_time <- cli::col_cyan(process_time)
+  } else {
+    # done
+    process_time <- cli::col_grey(process_time)
+  }
+
+  msg <- cli::format_inline("{process_time}{check_time}{msg}")
+  counts <- process$get_status_counts()
+  out <- cli_table_row(
+    status = status,
+    ok = counts[["NONE"]] + counts[["OK"]],
+    notes = counts[["NOTE"]],
+    warnings = counts[["WARNING"]],
+    errors = counts[["ERROR"]],
+    msg
+  )
+
+  cli::ansi_substring(out, 1, width)
 }
 
 #' @export
@@ -20,7 +63,6 @@ report_initialize.reporter_ansi_tty <- function(
     envir = parent.frame()) {
   # named factor vector, names as task aliases and value of last reported status
   reporter$status <- STATUS$pending[c()]
-  n_char_titles <- max(nchar(design$checks$alias))
 
   # hide cursor when initializer enters, ensure its restored even if interrupted
   cli::ansi_hide_cursor()
@@ -28,12 +70,6 @@ report_initialize.reporter_ansi_tty <- function(
     on.exit,
     list(quote(cli::ansi_show_cursor()), add = TRUE),
     envir = envir
-  )
-
-  cat(
-    strrep(" ", n_char_titles + 2),
-    cli_table_row("S", "OK", "N", "W", "E", title = TRUE), "\n",
-    sep = ""
   )
 
   cli::cli_progress_bar(
@@ -56,6 +92,15 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
   new_idx <- which(design$checks$process > STATUS$pending)
   new_idx <- new_idx[!design$checks$alias[new_idx] %in% names(reporter$status)]
   if (length(new_idx) > 0) {
+    # first process, print header
+    if (length(reporter$status) == 0) {
+      cat(
+        strrep(" ", n_char_titles + 2),
+        cli_table_row("S", "OK", "N", "W", "E", title = TRUE), "\n",
+        sep = ""
+      )
+    }
+
     # always start by reporting in progress, even if finished before reporting
     new <- rep_len(STATUS$`in progress`, length(new_idx))
     names(new) <- design$checks$alias[new_idx]
@@ -71,8 +116,9 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
     n_lines <- length(reporter$status) - idx + 1L
     width <- cli::console_width() - n_char_titles - 2
     task_name <- design$checks$alias[[process_idx]]
+
     status <- format_status_line_ansi(
-      design$checks$process[[process_idx]],
+      design$active_processes()[[task_name]],
       width = width
     )
 
