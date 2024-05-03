@@ -33,7 +33,7 @@ check_design <- R6::R6Class(
       package = character(0L), # package name
       version = package_version("", strict = FALSE)[c()], # package version
       cmd = list(), # command to issue in a separate process
-      process = list() # process enum, or processx process object
+      process = list() # process object or STATUS enum
     ),
 
     #' Initialize a new check design
@@ -47,9 +47,28 @@ check_design <- R6::R6Class(
       self$checks <- checks
     },
 
-    #' Step Through Tasks
-    #' @return A logical value indicating whether a new process was spawned
+    #' Get Active Processes
+    active_processes = function() {
+      private$active
+    },
+
+    #' Terminate Design Processes
+    terminate = function() {
+      invisible(lapply(private$active, function(process) process$kill()))
+    },
+
+    #' Fill Available Processes with Tasks
+    #' @return A logical value, indicating whether processes are actively
+    #'   running.
     step = function() {
+      while (res <- self$start_next_task()) {}
+      res >= 0
+    },
+
+    #' Start Next Task
+    #' @return A integer value, coercible to logical to indicate whether a new
+    #'   process was spawned, or `-1` if all tasks have finished.
+    start_next_task = function() {
       # finalize any finished processes
       for (process in private$active) {
         if (!process$is_alive()) process$finalize()
@@ -58,20 +77,20 @@ check_design <- R6::R6Class(
       # if all available processes are in use, terminate early
       n_active <- length(private$active)
       if (n_active >= private$n) {
-        return(FALSE)
+        return(0L)
       }
 
       # if a check package's dependencies are satisfied, proceed with checks
       ready_roots <- dep_graph_which_root_satisfied(self$graph)
       ready_indices <- with(self$checks, {
-        which(package %in% ready_roots & process == "todo")
+        which(package %in% ready_roots & vlapply(process, `==`, STATUS$pending))
       })
       if (length(ready_indices) > 0) {
         idx <- head(ready_indices, 1L)
         package <- self$checks[[idx, "package"]]
         alias <- self$checks[[idx, "alias"]]
 
-        process <- mock_process$new(runif(1, 15, 25)) # fake process, lasts ~20s
+        # process <- mock_process$new(runif(1, 15, 25), class = "revdep_process") # fake process, lasts ~20s
         deps <- dep_graph_neighborhoods(self$graph, package)
         dep_libs <- path_package_libs(private$output, package)
         # this process needs to:
@@ -80,7 +99,7 @@ check_design <- R6::R6Class(
         #   - run r cmd check
 
         success <- self$push_check_process(idx, process)
-        return(success)
+        return(as.integer(success))
       }
 
       # if we can't run a new package checks, install next dependencies
@@ -88,48 +107,58 @@ check_design <- R6::R6Class(
       if (length(next_dep_install) > 0) {
         package <- head(next_dep_install, 1L)
 
+        process <- mock_process$new(runif(1, 0.5, 1.0), class = "install_package_process") # fake process, lasts ~0.5s
+
         # build libpaths for install process
-        cur_libs <- path_package_libs(private$output)
-        new_lib <- path_package_libs(private$output, package, create = TRUE)
-        process <- install_packages_process$new(
-          package,
-          lib = new_lib,
-          libpaths = cur_libs,
-          log = path_package_install_log(private$output, package)
-        )
+        # cur_libs <- path_package_libs(private$output)
+        # new_lib <- path_package_libs(private$output, package, create = TRUE)
+        # process <- install_packages_process$new(
+        #   package,
+        #   lib = new_lib,
+        #   libpaths = cur_libs,
+        #   log = path_package_install_log(private$output, package)
+        # )
 
         success <- self$push_install_process(package, process)
-        return(success)
+        return(as.integer(success))
       }
 
-      FALSE
+      finished <- length(private$active) == 0
+      return(-finished)
     },
     push_check_process = function(idx, x) {
       alias <- self$checks[[idx, "alias"]]
-      self$checks[[idx, "process"]] <- "in progress"
+      self$checks[[idx, "process"]] <- STATUS$`in progress`
       self$push_process(alias, x)
       x$set_finalizer(function(process) {
         self$pop_process(alias)
-        self$checks[[idx, "process"]] <- "done"
+        self$checks[[idx, "process"]] <- STATUS$done
       })
       TRUE
     },
     push_install_process = function(package, x) {
-      alias <- paste("install", "dep", package, sep = "-")
-      graph_idx <- which(igraph::V(self$graph)$name == package)
-      igraph::vertex_attr(self$graph, "status", graph_idx) <- "in progress"
+      alias <- package
+      idx <- which(igraph::V(self$graph)$name == package)
+      igraph::vertex_attr(self$graph, "status", idx) <- STATUS$`in progress`
       x$set_finalizer(function(process) {
-        print(paste0("install of ", alias, " ended with status ", process$get_exit_status()))
         self$pop_process(alias)
-        igraph::vertex_attr(self$graph, "status", graph_idx) <- "done"
+        igraph::vertex_attr(self$graph, "status", idx) <- STATUS$done
       })
       self$push_process(alias, x)
       TRUE
+    },
+    get_process = function(name) {
+      if (name %in% rownames(self$checks)) {
+        self$checks[[name, "process"]]
+      } else {
+        private$active[[name]]
+      }
     },
     pop_process = function(name) {
       private$active[[name]] <- NULL
     },
     push_process = function(name, x) {
+      if (name %in% rownames(self$checks)) self$checks[[name, "process"]] <- x
       private$active[[name]] <- x
     }
   ),
@@ -157,9 +186,9 @@ new_check_tasks_df <- function(x) {
 
   # add process indicator
   if (is.null(x$process)) {
-    x$process <- list("todo")
+    x$process <- list(STATUS$pending)
   } else {
-    x$process[which(is.na(x$process))] <- list("todo")
+    x$process[which(is.na(x$process))] <- list(STATUS$pending)
   }
 
   # reorder columns for consistency
@@ -232,11 +261,14 @@ rev_dep_check_tasks_df <- function(
 
   # build reverse dependencies data frame
   df_dev <- df_rel <- as_check_tasks_df(revdeps, ...)
-  df_dev$alias <- paste0(df_dev$alias, " (+", package, "_dev)")
-  df_rel$alias <- paste0(df_rel$alias, " (+", package, "_v", package_v, ")")
+  df_dev$alias <- paste0(df_dev$alias, " (dev)")
+  df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
   idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
   df <- rbind(df_dev, df_rel)[idx, ]
-  df$process <- restored_statuses[match(df$alias, names(restored_statuses))]
+
+  # restore process statuses recovered from previous output
+  idx <- which(df$alias %in% names(restored_statuses))
+  df$process[idx] <- STATUS[restored_statuses[df$alias[idx]]]
 
   # re-structure data frame as a plan object
   new_check_tasks_df(df)

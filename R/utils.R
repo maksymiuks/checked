@@ -9,14 +9,13 @@ enum <- function(...) {
 }
 
 Ops.factor <- function(e1, e2) {
-  switch(.Generic, # nolint
-    ">" = as.numeric(e1) > as.numeric(e2),
-    ">=" = as.numeric(e1) > as.numeric(e2),
-    "==" = as.numeric(e1) > as.numeric(e2),
-    "<" = as.numeric(e1) > as.numeric(e2),
-    "<=" = as.numeric(e1) > as.numeric(e2),
+  # nolint start, styler: off
+  switch(.Generic,
+    ">" = , ">=" = , "==" = , "<" = , "<= " =
+      do.call(.Generic, list(as.numeric(e1), as.numeric(e2))),
     NextMethod()
   )
+  # nolint end, styler: on
 }
 
 STATUS <- enum( # nolint
@@ -33,7 +32,7 @@ DEP <- enum( # nolint
   "LinkingTo"
 )
 
-DEP_STRONG <- unlist(DEP[1:3]) # nolint
+DEP_STRONG <- unlist(DEP[3:5]) # nolint
 
 check_path_is_pkg_source <- function(pkg) {
   checkmate::assert_string(pkg)
