@@ -25,11 +25,11 @@ STATUS <- enum( # nolint
 )
 
 DEP <- enum( # nolint
-  "Enhances",
-  "Suggests",
   "Imports",
   "Depends",
-  "LinkingTo"
+  "LinkingTo",
+  "Enhances",
+  "Suggests"
 )
 
 DEP_STRONG <- unlist(DEP[3:5]) # nolint
@@ -96,30 +96,16 @@ symlink_or_copy <- function(from, to) {
   }
 }
 
-is_package_installed <- function(pkg, lib.loc) {
+is_package_done <- function(pkg, lib.loc) {
   path <- find.package(pkg, lib.loc = lib.loc, quiet = TRUE)
   length(path) > 0
-}
-
-reversecheck_lib_loc <- function(lib.loc, reversecheck_dir) {
-  unique(normalizePath(c(
-    path_lib(reversecheck_dir, "old"),
-    path_lib(reversecheck_dir, "cache"),
-    lib.loc
-  ), mustWork = FALSE))
-}
-
-reversecheck_check_lib_loc <- function(pkg, lib.loc, reversecheck_dir, type = "old") {
-  unique(normalizePath(c(
-    path_lib(reversecheck_dir, type),
-    path_revdep_lib(reversecheck_dir, pkg),
-    lib.loc
-  ), mustWork = FALSE))
 }
 
 #' @import cli
 "_PACKAGE"
 
+drlapply <- function(...) do.call(rbind, lapply(...))
+uulist <- function(...) unique(as.character(unlist(...)))
 `%||%` <- function(lhs, rhs) if (is.null(lhs)) rhs else lhs
 vcapply <- function(...) vapply(..., FUN.VALUE = character(1L))
 vlapply <- function(...) vapply(..., FUN.VALUE = logical(1L))

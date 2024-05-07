@@ -164,5 +164,5 @@ dep_graph_is_dependency <- function(g, v) {
 dep_graph_update_done <- function(g, lib.loc) {
   v <- igraph::V(g)
   which_done <- which(vlapply(v$name, is_package_done, lib.loc = lib.loc))
-  dep_graph_set_package_status(g, V[which_done], STATUS$done)
+  dep_graph_set_package_status(g, v[which_done], STATUS$done)
 }
