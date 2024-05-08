@@ -2,8 +2,19 @@ path_default <- function() {
   file.path(tempdir(), utils::packageName())
 }
 
+path_libs <- function(path) {
+  dir_create(p <- file.path(path, "libs"))
+  normalizePath(p)
+}
+
 path_lib <- function(path) {
-  dir_create(p <- file.path(path, "lib"))
+  dir_create(p <- file.path(path_libs(path), "lib"))
+  normalizePath(p)
+}
+
+path_custom_lib <- function(path, custom) {
+  valid_name <- make.names(custom)
+  dir_create(p <- file.path(path_libs(path), valid_name))
   normalizePath(p)
 }
 
@@ -17,6 +28,6 @@ path_logs <- function(path) {
   normalizePath(p)
 }
 
-path_check_output <- function(path) {
+path_check_output <- function(path, check) {
   # holdplacer
 }

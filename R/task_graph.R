@@ -21,6 +21,16 @@ split_packages_names <- function(x) {
   
 }
 
+task_graph_create <- function(df, repos = getOption("repos"), ...) {
+  edges <- task_edges_df(df, getOption("repos"))
+  vertices <- task_vertices_df(df, edges)
+  
+  g <- igraph::graph_from_data_frame(edges, vertices = vertices)
+  igraph::V(g)$status <- STATUS$pending
+  g <- task_graph_sort(g)
+  g
+}
+
 task_edges_df <- function(df, repos) {
   pkgs <- unique(vcapply(df$package, `[[`, "package"))
   db <- available.packages(repos = repos)[, c("Package", uulist(DEP))]
@@ -117,18 +127,129 @@ task_vertices_df <- function(df, edges) {
   task_type <- ifelse(vertices %in% df$alias, "check", "install")
   custom <- vertices %in% custom_pkgs_names
   install_lib <- vcapply(vertices, function(x) {
-    # todo
-    # I plan to include string that will be eval(parse())
-    # then output could be filled later like you suggested
+    if (x %in% df$alias) {
+      sprintf("path_check_output(private$output, \"%s\")", x)
+    } else if (x %in% custom_pkgs_names) {
+      sprintf("path_custom_lib(private$output, \"%s\")", x)
+    } else {
+      "path_lib(private$output)"
+    }
   })
-  path_check_output
+  
   
   data.frame(
     name = vertices,
-    type = NULL,
-    status = STATUS$pending,
-    install_lib = NULL,
-    custom = NULL,
+    type = task_type,
+    install_lib = install_lib,
+    custom = custom
+  )
+}
+
+task_get_lib_loc <- function(g, node) {
+  nhood <- task_graph_neighborhoods(g, node)[[1]]
+  nhood <- nhood[names(nhood) != node]
+  # Custom packages are possible only for the check type nodes which are
+  # always terminal. Therefore if we sort nhood making custom packages appear
+  # first, their lib will always be prioritized
+  attributes <- igraph::vertex.attributes(g, index = nhood)
+  unique(attributes$install_lib[order(attributes$custom, decreasing = TRUE)])
+}
+
+#' Find Dependency Neighborhood
+#'
+#' @param g A dependency graph, as produced with [dep_graph_create()]
+#' @param names Names of packages whose neighborhoods should be calculcated.
+#'
+#' @importFrom igraph neighboorhood V
+task_graph_neighborhoods <- function(g, nodes) {
+  igraph::neighborhood(
+    g,
+    order = length(g),
+    nodes = nodes,
+    mode = "in"
+  )
+}
+
+
+task_graph_sort <- function(g) {
+  roots <- which(igraph::vertex_attr(g, "type") == "check")
+  
+  # split into neighborhoods by root (revdep)
+  nhood <- task_graph_neighborhoods(g, roots)
+  
+  # prioritize by neighborhood size (small to large)
+  priority <- length(nhood)
+  priority_footprint <- integer(length(g))
+  for (i in order(-vapply(nhood, length, integer(1L)))) {
+    priority_footprint[nhood[[i]]] <- priority
+    priority <- priority - 1
+  }
+  
+  # use only strong dependencies to prioritize by topology (leafs first)
+  strong_edges <- igraph::E(g)[igraph::E(g)$type %in% DEP_STRONG]
+  g_strong <- igraph::subgraph.edges(g, strong_edges, delete.vertices = FALSE)
+  topo <- igraph::topo_sort(g_strong, mode = "in")
+  priority_topo <- integer(length(g))
+  priority_topo[match(topo$name, igraph::V(g)$name)] <- rev(seq_along(topo))
+  
+  # combine priorities, prioritize first by total, footprint then topology
+  priorities <- rbind(priority_footprint, priority_topo)
+  order <- rank(length(igraph::V(g))^seq(nrow(priorities) - 1, 0) %*% priorities)
+  g <- igraph::permute(g, order)
+  
+  g
+}
+
+#' Find the Next Packages Not Dependent on an Unavailable Package
+#'
+#' While other packages are in progress, ensure that the next selected package
+#' already has its dependencies done.
+#'
+#' @param g A dependency graph, as produced with [dep_graph_create()]
+#' @return The name of the next package to prioritize
+#'
+#' @importFrom igraph incident_edges tail_of
+task_graph_which_satisfied <- function(
+    g,
+    v = igraph::V(g),
+    dependencies = TRUE,
+    status = STATUS$pending) {
+  if (is.character(status)) status <- STATUS[[status]]
+  dependencies <- check_dependencies(dependencies)
+  if (length(status) > 0) {
+    idx <- v$status %in% status
+    v <- v[idx]
+  }
+  deps_met <- vlapply(
+    igraph::incident_edges(g, v, mode = "in"),
+    function(edges) {
+      edges <- edges[edges$type %in% dependencies]
+      edges <<- edges
+      all(igraph::tail_of(g, edges)$status == STATUS$done)
+    }
+  )
+  names(deps_met[deps_met])
+}
+
+#' @describeIn dep_graph_which_satisfied
+#' List vertices whose strong dependencies are satisfied
+task_graph_which_satisfied_strong <- function(..., dependencies = "strong") { # nolint
+  task_graph_which_satisfied(..., dependencies = dependencies)
+}
+
+#' @describeIn dep_graph_which_satisfied
+#' List root vertices whose dependencies are all satisfied
+task_graph_which_check_satisfied <- function(
+    g,
+    ...,
+    dependencies = "all",
+    status = "done") {
+  task_graph_which_satisfied(
+    g,
+    igraph::V(g)[igraph::V(g)$type == "check"],
+    ...,
+    dependencies = dependencies,
+    status = status
   )
 }
 

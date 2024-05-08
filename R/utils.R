@@ -32,7 +32,7 @@ DEP <- enum( # nolint
   "Suggests"
 )
 
-DEP_STRONG <- unlist(DEP[3:5]) # nolint
+DEP_STRONG <- unlist(DEP[1:3]) # nolint
 
 check_path_is_pkg_source <- function(pkg) {
   checkmate::assert_string(pkg)
