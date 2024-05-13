@@ -34,6 +34,23 @@ DEP <- enum( # nolint
 
 DEP_STRONG <- unlist(DEP[1:3]) # nolint
 
+base_pkgs <- function() {
+  ip <- installed.packages()
+  c("R", ip[!is.na(ip[, "Priority"]) & ip[, "Priority"] == "base", "Package"])
+}
+
+split_packages_names <- function(x) {
+  unname(
+    gsub(
+      "^\\s+|\\s+$", "", 
+      unlist(
+        strsplit(gsub("\\s*\\(.*?\\)\\s*", "", x), ",\\s*")
+      )
+    )
+  )
+  
+}
+
 check_path_is_pkg_source <- function(pkg) {
   checkmate::assert_string(pkg)
   checkmate::assert_directory_exists(pkg)

@@ -4,26 +4,9 @@ empty_edge <- data.frame(
   type = character(0)
 )
 
-base_pkgs <- function() {
-  ip <- installed.packages()
-  c("R", ip[!is.na(ip[, "Priority"]) & ip[, "Priority"] == "base", "Package"])
-}
-
-split_packages_names <- function(x) {
-  unname(
-    gsub(
-      "^\\s+|\\s+$", "", 
-      unlist(
-        strsplit(gsub("\\s*\\(.*?\\)\\s*", "", x), ",\\s*")
-        )
-      )
-    )
-  
-}
-
 task_graph_create <- function(df, repos = getOption("repos"), ...) {
-  edges <- task_edges_df(df, getOption("repos"))
-  vertices <- task_vertices_df(df, edges)
+  edges <- task_edges_df(df, repos)
+  vertices <- task_vertices_df(df, edges, repos)
   
   g <- igraph::graph_from_data_frame(edges, vertices = vertices)
   igraph::V(g)$status <- STATUS$pending
@@ -32,7 +15,7 @@ task_graph_create <- function(df, repos = getOption("repos"), ...) {
 }
 
 task_edges_df <- function(df, repos) {
-  pkgs <- unique(vcapply(df$package, `[[`, "package"))
+  pkgs <- unique(vcapply(df$package, `[[`, "name"))
   db <- available.packages(repos = repos)[, c("Package", uulist(DEP))]
   
   # Add custom packages to db
@@ -85,7 +68,7 @@ task_edges_df <- function(df, repos) {
   # We need to generate edges for them using original package dependencies
   # to make sure dependency relation is maintained
   check_edges <- drlapply(pkgs, function(p) {
-    df_rows <- df[vcapply(df$package, `[[`, "package") == p, ]
+    df_rows <- df[vcapply(df$package, `[[`, "name") == p, ]
     edges_rows <- edges[edges$root == p, ]
     
     data.frame(
@@ -97,57 +80,76 @@ task_edges_df <- function(df, repos) {
 
   # Generating edges for custom packages if applicable for given R CMD check alias.
   # Hardcoding Depends type to make sure it is always installed prior running the check
+  # Custom packages should be connected to normal edges to makes sure dependencies tree
+  # is maintained
   custom_edges <- drlapply(df$alias, function(a) {
     row <- df[df$alias == a, ]
-    if (!is.null(row$custom[[1]]$name)) {
+    if (!is.null(row$custom[[1]]$alias)) {
+      custom_deps_edges <- edges[edges$root == row$custom[[1]]$name, ]
       data.frame(
-        dep = row$custom[[1]]$name,
-        root = row$alias,
-        type = "Depends"
+        dep = c(row$custom[[1]]$alias, custom_deps_edges$dep),
+        root = c(row$alias, rep(row$custom[[1]]$alias, times = NROW(custom_deps_edges))),
+        type = c("Depends", custom_deps_edges$type)
       )
     } else {
       empty_edge
     }
   })
-  
-  # Droping original edges for final packages (scheduled to be checked)
+    # Droping original edges for final packages (scheduled to be checked)
   # as we are about to append check edges.
   # Certain packages can be both, a dependency and a package to check
   roots_to_remove <- pkgs[pkgs %in% edges$root & !pkgs %in% edges$dep]
   edges <- edges[!edges$root %in% roots_to_remove, ]
   
   edges <- rbind(edges, check_edges, custom_edges)
-  edges
+  # Make sure we skip duplicated edges as super graphs are meaningless for 
+  # the graph task
+  unique(edges)
 }
 
-task_vertices_df <- function(df, edges) {
+task_vertices_df <- function(df, edges, repos) {
   vertices <- unique(c(edges$dep, edges$root))
-  custom_pkgs_names <- uulist(lapply(df$custom, `[[`, "name"))
-  pkgs <- unique(vcapply(df$package, `[[`, "package"))
+  custom_pkgs_aliases <- uulist(lapply(df$custom, `[[`, "alias"))
+  pkgs <- unique(vcapply(df$package, `[[`, "name"))
   task_type <- ifelse(vertices %in% df$alias, "check", "install")
-  custom <- vertices %in% custom_pkgs_names
   install_lib <- vcapply(vertices, function(x) {
     if (x %in% df$alias) {
       sprintf("path_check_output(private$output, \"%s\")", x)
-    } else if (x %in% custom_pkgs_names) {
+    } else if (x %in% custom_pkgs_aliases) {
       sprintf("path_custom_lib(private$output, \"%s\")", x)
     } else {
       "path_lib(private$output)"
     }
   })
   
+  packages <- lapply(vertices, function(v) {
+    if (v %in% df$alias) {
+      v_pkg <- df$package[[which(df$alias == v)]]
+    } else if (v %in% custom_pkgs_aliases) {
+      df$custom[[head(which(as.character(lapply(df$custom, `[[`, "alias")) == v), 1)]]
+    } else {
+      reversecheck_package(
+        name = v,
+        repos = repos
+      )
+    }
+  })
   
-  data.frame(
+  out <- data.frame(
     name = vertices,
     type = task_type,
     install_lib = install_lib,
-    custom = custom
+    custom = vertices %in% custom_pkgs_aliases
   )
+  
+  out$package <- packages
+  
+  out
 }
 
 task_get_lib_loc <- function(g, node) {
   nhood <- task_graph_neighborhoods(g, node)[[1]]
-  nhood <- nhood[names(nhood) != node]
+  nhood <- nhood[names(nhood) != names(node)]
   # Custom packages are possible only for the check type nodes which are
   # always terminal. Therefore if we sort nhood making custom packages appear
   # first, their lib will always be prioritized
@@ -224,7 +226,6 @@ task_graph_which_satisfied <- function(
     igraph::incident_edges(g, v, mode = "in"),
     function(edges) {
       edges <- edges[edges$type %in% dependencies]
-      edges <<- edges
       all(igraph::tail_of(g, edges)$status == STATUS$done)
     }
   )
@@ -243,7 +244,7 @@ task_graph_which_check_satisfied <- function(
     g,
     ...,
     dependencies = "all",
-    status = "done") {
+    status = STATUS$pending) {
   task_graph_which_satisfied(
     g,
     igraph::V(g)[igraph::V(g)$type == "check"],
@@ -252,6 +253,40 @@ task_graph_which_check_satisfied <- function(
     status = status
   )
 }
+
+task_graph_next_to_run <- function(g, envir = parent.frame()) {
+  checks <- task_graph_which_check_satisfied(g)
+  installs <- task_graph_which_satisfied_strong(g)
+  
+  # Prioritize checks overs installs
+  v <- igraph::V(g)[c(checks, installs)]
+  next_task <- head(v, 1L)
+  if (length(next_task) > 0) {
+    attrs <- igraph::vertex.attributes(g, next_task)
+    
+    structure(
+      list(
+        v = next_task,
+        install_lib = eval(parse(text = attrs$install_lib), envir = envir),
+        lib.loc = vcapply(task_get_lib_loc(g, next_task), function(lib) eval(parse(text = lib), envir = envir), USE.NAMES = FALSE),
+        package = attrs$package
+      ),
+      class = attrs$type
+    )
+  }
+}
+
+task_graph_set_package_status <- function(g, v, status) {
+  if (is.character(status)) status <- STATUS[[status]]
+  igraph::set_vertex_attr(g, "status", v, status)
+}
+
+task_graph_update_done <- function(g, lib.loc) {
+  v <- igraph::V(g)[igraph::V(g)$type == "install"]
+  which_done <- which(vlapply(v$name, is_package_done, lib.loc = lib.loc))
+  task_graph_set_package_status(g, v[which_done], STATUS$done)
+}
+
 
 rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   path <- check_path_is_pkg_source(path)
@@ -266,14 +301,13 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   )
   
   df_dev$package <- df_rel$package <- rev_dep_check_tasks(revdeps, repos)
-  df_dev$custom <- rep(list(list(
-    name = paste0(package, " (dev)"),
-    package = package,
-    path = path,
-    custom = TRUE
+  df_dev$custom <- rep(list(reversecheck_package(
+    alias = paste0(package, " (dev)"),
+    name = package,
+    path = path
   )), times = NROW(df_dev))
   
-  df_rel$custom <- rep(list(list()), times = NROW(df_dev))
+  df_rel$custom <- rep(list(reversecheck_package()), times = NROW(df_dev))
   
   df_dev$alias <- paste0(df_dev$alias, " (dev)")
   df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
@@ -281,13 +315,15 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   rbind(df_dev, df_rel)[idx, ]
 }
 
-rev_dep_check_tasks <- function(packages, repos) {
+rev_dep_check_tasks <- function(packages, repos, aliases = packages) {
   db <- available.packages(repos = repos)
-  lapply(packages, function(p) {
-    list(
-      package = p,
+  mapply(function(p, a) {
+    reversecheck_package(
+      name = p,
+      alias = a,
       path = get_package_source(p, db = db),
-      custom = FALSE
+      type = "source",
+      repos = repos
     )
-  })
+  }, packages, aliases, SIMPLIFY = FALSE, USE.NAMES = FALSE)
 }

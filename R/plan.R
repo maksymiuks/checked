@@ -24,27 +24,20 @@ check_design <- R6::R6Class(
     #' are required prior to execution of each check task.
     graph = NULL,
 
-    #' Specifies the tasks that need to be performed. When preparing to execute
-    #' these tasks, other tasks may need to be inserted, such as dependency
-    #' installation tasks needed before a check task can be run.
-    checks = data.frame(
-      alias = character(0L), # a display name for the task
-      type = character(0L), # a task type
-      package = character(0L), # package name
-      version = package_version("", strict = FALSE)[c()], # package version
-      cmd = list(), # command to issue in a separate process
-      process = list() # process object or STATUS enum
-    ),
-
     #' Initialize a new check design
-    initialize = function(x, n = 2L, ...) {
+    #' repos passed here will be used only fetch dependencies. Source of packages
+    #' to be check are embedded in the df and might very well be different repos.
+    initialize = function(
+      df, n = 2L, output = tempfile(paste(packageName(), Sys.Date(), sep = "-")), 
+      lib.loc = .libPaths(), repos = getOption("repos"), ...) {
       private$n <- n
-      checks <- new_check_tasks_df(x, ...)
-      self$graph <- dep_graph_create(checks$package)
-      idx <- order(match(checks$package, igraph::V(self$graph)$name))
-      checks <- checks[order(idx), ]
-      rownames(checks) <- NULL
-      self$checks <- checks
+      private$output <- output
+      private$lib.loc <- lib.loc
+      private$repos <- repos
+      
+      g <- task_graph_create(df, repos)
+      self$graph <- task_graph_update_done(g, lib.loc)
+      
     },
 
     #' Get Active Processes
@@ -80,86 +73,35 @@ check_design <- R6::R6Class(
         return(0L)
       }
 
-      # if a check package's dependencies are satisfied, proceed with checks
-      ready_roots <- dep_graph_which_root_satisfied(self$graph)
-      ready_indices <- with(self$checks, {
-        which(package %in% ready_roots & vlapply(process, `==`, STATUS$pending))
-      })
-      if (length(ready_indices) > 0) {
-        idx <- head(ready_indices, 1L)
-        package <- self$checks[[idx, "package"]]
-        alias <- self$checks[[idx, "alias"]]
 
-        # process <- mock_process$new(runif(1, 15, 25), class = "revdep_process") # fake process, lasts ~20s
-        deps <- dep_graph_neighborhoods(self$graph, package)
-        dep_libs <- path_package_libs(private$output, package)
-        # this process needs to:
-        #   - set up libpaths
-        #   - set up appropriate, restricted library, linking to cache
-        #   - run r cmd check
-
-        success <- self$push_check_process(idx, process)
+      next_task <- task_graph_next_to_run(self$graph)
+      if (length(next_task) > 0) {
+        process <- start_task(next_task, private$output, private)
+        success <- self$push_process(next_task, process)
         return(as.integer(success))
       }
 
-      # if we can't run a new package checks, install next dependencies
-      next_dep_install <- dep_graph_which_satisfied_strong(self$graph)
-      if (length(next_dep_install) > 0) {
-        package <- head(next_dep_install, 1L)
-
-        process <- mock_process$new(runif(1, 0.5, 1.0), class = "install_package_process") # fake process, lasts ~0.5s
-
-        # build libpaths for install process
-        # cur_libs <- path_package_libs(private$output)
-        # new_lib <- path_package_libs(private$output, package, create = TRUE)
-        # process <- install_packages_process$new(
-        #   package,
-        #   lib = new_lib,
-        #   libpaths = cur_libs,
-        #   log = path_package_install_log(private$output, package)
-        # )
-
-        success <- self$push_install_process(package, process)
-        return(as.integer(success))
-      }
-
-      finished <- length(private$active) == 0
+      finished <- (length(private$active) == 0) && self$is_done()
       return(-finished)
     },
-    push_check_process = function(idx, x) {
-      alias <- self$checks[[idx, "alias"]]
-      self$checks[[idx, "process"]] <- STATUS$`in progress`
-      self$push_process(alias, x)
-      x$set_finalizer(function(process) {
-        self$pop_process(alias)
-        self$checks[[idx, "process"]] <- STATUS$done
-      })
-      TRUE
-    },
-    push_install_process = function(package, x) {
-      alias <- package
-      idx <- which(igraph::V(self$graph)$name == package)
-      igraph::vertex_attr(self$graph, "status", idx) <- STATUS$`in progress`
-      x$set_finalizer(function(process) {
-        self$pop_process(alias)
-        igraph::vertex_attr(self$graph, "status", idx) <- STATUS$done
-      })
-      self$push_process(alias, x)
-      TRUE
-    },
     get_process = function(name) {
-      if (name %in% rownames(self$checks)) {
-        self$checks[[name, "process"]]
-      } else {
-        private$active[[name]]
-      }
+      private$active[[name]]
     },
     pop_process = function(name) {
       private$active[[name]] <- NULL
     },
-    push_process = function(name, x) {
-      if (name %in% rownames(self$checks)) self$checks[[name, "process"]] <- x
+    push_process = function(task, x) {
+      name <- names(task$v)
+      self$graph <- task_graph_set_package_status(self$graph, task$v, STATUS$`in progress`)
+      x$set_finalizer(function(process) {
+        self$pop_process(name)
+        self$graph <- task_graph_set_package_status(self$graph, task$v, STATUS$done)
+      })
       private$active[[name]] <- x
+      TRUE
+    },
+    is_done = function() {
+      all(igraph::vertex.attributes(self$graph)$status == STATUS$done)
     }
   ),
   private = list(
@@ -167,12 +109,41 @@ check_design <- R6::R6Class(
     output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
     # maximum child process count
     n = 2L,
+    # lib.loc of allowed packages,
+    lib.loc = .libPaths(),
+    # repositories to fetch dependencies from
+    repos = getOption("repos"),
     # active processes
     active = list()
   )
 )
 
+start_task <- function(task, ...) {
+  UseMethod("start_task")
+}
 
+start_task.install <- function(task, output, lib.loc, ...) {
+  pkg <- task$package[[1]]
+  package <- if (is.null(pkg$path)) pkg$name else pkg$path
+  libpaths <- c(task$lib.loc, lib.loc)
+  install_packages_process$new(
+    package,
+    lib = task$install_lib,
+    libpaths = task$lib.loc,
+    repos = pkg$repos,
+    type = pkg$type,
+    log = path_package_install_log(output, pkg$alias)
+  )
+}
+
+start_task.check <- function(task, output, lib.loc, ...) {
+  process <- mock_process$new(runif(1, 15, 25), class = "revdep_process") # fake process, lasts ~20s
+  # lib.loc = task$lib.loc
+  # this process needs to:
+  #   - set up libpaths
+  #   - set up appropriate, restricted library, linking to cache
+  #   - run r cmd check
+}
 
 new_check_tasks_df <- function(x) {
   req_cols <- c("alias", "type", "package", "version", "cmd")

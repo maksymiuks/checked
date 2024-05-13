@@ -29,5 +29,5 @@ path_logs <- function(path) {
 }
 
 path_check_output <- function(path, check) {
-  # holdplacer
+  "placeholder"
 }
