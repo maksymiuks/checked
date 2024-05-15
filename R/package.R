@@ -1,4 +1,5 @@
 reversecheck_package <- function(name = NULL, alias = name, path = NULL, type = NULL, repos = NULL) {
+  
   if (is.null(name) && !is.null(path) && !file.exists(file.path(path, "DESCRIPTION"))) {
     name <- get_package_name(path)
   }
@@ -15,5 +16,4 @@ reversecheck_package <- function(name = NULL, alias = name, path = NULL, type = 
     # 'package' object
     class = "reversecheck_package"
   )
-
 }

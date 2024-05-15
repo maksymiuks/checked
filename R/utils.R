@@ -48,7 +48,16 @@ split_packages_names <- function(x) {
       )
     )
   )
-  
+}
+
+replace_with_map <- function(x, value, replacement) {
+  m <- match(x, value)
+  x[which(!is.na(m))] <- replacement[m[!is.na(m)]]
+  x
+}
+
+raw_based_hash <- function(x) {
+  paste0(c("hash", as.character(charToRaw(x))), collapse = "")
 }
 
 check_path_is_pkg_source <- function(pkg) {

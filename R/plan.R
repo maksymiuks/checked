@@ -9,13 +9,12 @@ new_rev_dep_check_design <- function(x, ...) {
 
 #' @examples
 #' package_source_dir <- "../praise"
-#' x <- new_rev_dep_check_design(package_source_dir, n = 2L)
-#' while (any(x$checks$process != "done")) {
-#'   while (x$step()) {}
-#'   cat("Processes: \n")
-#'   cat(paste0(" * ", names(x$.__enclos_env__$private$active), collapse = "\n"), "\n")
-#'   print(x)
-#'   Sys.sleep(1)
+#' df <- rev_dep_check_tasks_df("~/Desktop/validation/code/DALEX/")
+#' plan <- check_design$new(df, n = 20)
+#' while (!all(as.character(igraph::vertex.attributes(plan$graph)$status) == "done")) {
+#'   print(table(igraph::vertex.attributes(plan$graph)$status |> as.character()))
+#'   plan$start_next_task()
+#' }
 #' }
 check_design <- R6::R6Class(
   "check_design",
@@ -73,8 +72,7 @@ check_design <- R6::R6Class(
         return(0L)
       }
 
-
-      next_task <- task_graph_next_to_run(self$graph)
+      next_task <- next_task_to_run(self$graph, private$output)
       if (length(next_task) > 0) {
         process <- start_task(next_task, private$output, private)
         success <- self$push_process(next_task, process)
@@ -117,33 +115,6 @@ check_design <- R6::R6Class(
     active = list()
   )
 )
-
-start_task <- function(task, ...) {
-  UseMethod("start_task")
-}
-
-start_task.install <- function(task, output, lib.loc, ...) {
-  pkg <- task$package[[1]]
-  package <- if (is.null(pkg$path)) pkg$name else pkg$path
-  libpaths <- c(task$lib.loc, lib.loc)
-  install_packages_process$new(
-    package,
-    lib = task$install_lib,
-    libpaths = task$lib.loc,
-    repos = pkg$repos,
-    type = pkg$type,
-    log = path_package_install_log(output, pkg$alias)
-  )
-}
-
-start_task.check <- function(task, output, lib.loc, ...) {
-  process <- mock_process$new(runif(1, 15, 25), class = "revdep_process") # fake process, lasts ~20s
-  # lib.loc = task$lib.loc
-  # this process needs to:
-  #   - set up libpaths
-  #   - set up appropriate, restricted library, linking to cache
-  #   - run r cmd check
-}
 
 new_check_tasks_df <- function(x) {
   req_cols <- c("alias", "type", "package", "version", "cmd")
