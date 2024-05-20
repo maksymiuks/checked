@@ -8,10 +8,9 @@ new_rev_dep_check_design <- function(x, ...) {
 }
 
 #' @examples
-#' package_source_dir <- "../praise"
 #' df <- rev_dep_check_tasks_df("~/Desktop/validation/code/DALEX/")
 #' plan <- check_design$new(df, n = 20)
-#' while (!all(as.character(igraph::vertex.attributes(plan$graph)$status) == "done")) {
+#' while (!plan$is_done()) {
 #'   print(table(igraph::vertex.attributes(plan$graph)$status |> as.character()))
 #'   plan$start_next_task()
 #' }
@@ -171,80 +170,34 @@ as_check_tasks_df.character <- function(x, ...) {
   new_check_tasks_df(df)
 }
 
-#' Build Plan for Checking Reverse Dependencies from Package Source
-#'
-#' @param path A file path to a local package source code directory of the
-#'   package whose reverse dependencies are to be checked.
-#' @param output A file path to a directory in which logs and other check
-#'   metadata should be saved. Defaults to a new temporary directory.
-#' @param ... Additional arguments passed to individual
-#'   [`rcmdcheck::rcmdcheck`] calls
-#' @param restore Whether existing logs in `output` should be used to try to
-#'   restore a previous run. When in an interactive session, `NA` will indicate
-#'   that you should be prompted to confirm. Otherwise, a logical value
-#'   indicates whether to restore from or overwrite the existing logs.
-#'
-#' @return A check plan
-#'
-#' @examples
-#' \dontrun{
-#' pkg_source_dir <- "praise"
-#' rev_dep_check_plan(pkg_source_dir)
-#' }
-#'
-#' @importFrom tools package_dependencies
-#' @export
-rev_dep_check_tasks_df <- function(
-    path,
-    output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
-    ...,
-    restore) {
-  path <- check_path_is_pkg_source(path)
-  package <- get_package_name(path)
-  package_v <- available.packages()[package, "Version"]
-  revdeps <- tools::package_dependencies(package, reverse = TRUE)[[1]]
-  restored_statuses <- rev_dep_attempt_restore(output, restore)
-
-  # build reverse dependencies data frame
-  df_dev <- df_rel <- as_check_tasks_df(revdeps, ...)
-  df_dev$alias <- paste0(df_dev$alias, " (dev)")
-  df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
-  idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
-  df <- rbind(df_dev, df_rel)[idx, ]
-
-  # restore process statuses recovered from previous output
-  idx <- which(df$alias %in% names(restored_statuses))
-  df$process[idx] <- STATUS[restored_statuses[df$alias[idx]]]
-
-  # re-structure data frame as a plan object
-  new_check_tasks_df(df)
-}
-
 #' Attempt to Recover Previous Run State
 #'
-rev_dep_attempt_restore <- function(
-    path,
-    restore = if (interactive()) NA else TRUE) {
-  if (missing(path) || !file.exists(path)) {
-    return(character(0L))
-  }
+#'
+# TODO: reimplement restoration when API is done
 
-  restore <- if (interactive() && is.na(restore)) {
-    startsWith(toupper(trimws(readline(paste0(
-      "Output path '", path, "' already exists. Do you want ",
-      "to attempt to recover a previous run? [Y/n]"
-    )))), "Y")
-  }
-
-  if (isFALSE(restore)) {
-    unlink(path, recursive = TRUE)
-    return(character(0L))
-  } else {
-    check_dirs <- list.dirs(path, recursive = FALSE, full.names = TRUE)
-    names(check_dirs) <- basename(check_dirs)
-    statuses <- vcapply(check_dirs, function(path) {
-      STATUSES[STATUSES %in% list.files(path, include.dirs = FALSE)]
-    })
-    return(statuses)
-  }
-}
+# rev_dep_attempt_restore <- function(
+#     path,
+#     restore = if (interactive()) NA else TRUE) {
+#   if (missing(path) || !file.exists(path)) {
+#     return(character(0L))
+#   }
+# 
+#   restore <- if (interactive() && is.na(restore)) {
+#     startsWith(toupper(trimws(readline(paste0(
+#       "Output path '", path, "' already exists. Do you want ",
+#       "to attempt to recover a previous run? [Y/n]"
+#     )))), "Y")
+#   }
+# 
+#   if (isFALSE(restore)) {
+#     unlink(path, recursive = TRUE)
+#     return(character(0L))
+#   } else {
+#     check_dirs <- list.dirs(path, recursive = FALSE, full.names = TRUE)
+#     names(check_dirs) <- basename(check_dirs)
+#     statuses <- vcapply(check_dirs, function(path) {
+#       STATUSES[STATUSES %in% list.files(path, include.dirs = FALSE)]
+#     })
+#     return(statuses)
+#   }
+# }
