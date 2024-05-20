@@ -40,14 +40,24 @@ base_pkgs <- function() {
 }
 
 split_packages_names <- function(x) {
-  unname(
-    gsub(
-      "^\\s+|\\s+$", "", 
-      unlist(
-        strsplit(gsub("\\s*\\(.*?\\)\\s*", "", x), ",\\s*")
-      )
+  if (is.na(x)) {
+    x
+  } else {
+    vcapply(
+      tools:::.split_dependencies(x), 
+      "[[", 
+      "name",
+      USE.NAMES = FALSE
     )
-  )
+  }
+  # unname(
+  #   gsub(
+  #     "^\\s+|\\s+$", "",
+  #     unlist(
+  #       strsplit(gsub("\\s*\\(.*?\\)\\s*", "", x), ",\\s*")
+  #     )
+  #   )
+  # )
 }
 
 replace_with_map <- function(x, value, replacement) {
@@ -127,10 +137,20 @@ is_package_done <- function(pkg, lib.loc) {
   length(path) > 0
 }
 
+`%||%` <- function(x, y) {
+  if (!is.null(x)) {
+    x
+  } else {
+    y
+  }
+}
+
+
 #' @import cli
 "_PACKAGE"
 
 drlapply <- function(...) do.call(rbind, lapply(...))
+drmapply <- function(...) do.call(rbind, mapply(..., USE.NAMES = FALSE, SIMPLIFY = FALSE))
 uulist <- function(...) unique(as.character(unlist(...)))
 `%||%` <- function(lhs, rhs) if (is.null(lhs)) rhs else lhs
 vcapply <- function(...) vapply(..., FUN.VALUE = character(1L))

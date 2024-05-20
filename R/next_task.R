@@ -22,7 +22,8 @@ next_task_to_run <- function(g, output) {
 
 task_get_lib_loc <- function(g, node, output) {
   nhood <- task_graph_neighborhoods(g, node)[[1]]
-  nhood <- nhood[names(nhood) != names(node)]
+  name <- names(node) %||% node
+  nhood <- nhood[names(nhood) != name]
   # Custom packages are possible only for the check type nodes which are
   # always terminal. Therefore if we sort nhood making custom packages appear
   # first, their lib will always be prioritized
@@ -37,7 +38,6 @@ task_get_lib_loc <- function(g, node, output) {
 
 task_get_install_lib <- function(g, node, output) {
   attributes <- igraph::vertex.attributes(g, index = node)
-  
   if (attributes$type == "check") {
     path_check_output(output, attributes$package[[1]]$alias)
   } else if (attributes$custom) {
@@ -58,7 +58,7 @@ start_task.install <- function(task, output, lib.loc, ...) {
   install_packages_process$new(
     package,
     lib = task$install_lib,
-    libpaths = task$lib.loc,
+    libpaths = libpaths,
     repos = pkg$repos,
     type = pkg$type,
     log = path_package_install_log(output, pkg$alias)

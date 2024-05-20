@@ -74,7 +74,11 @@ check_design <- R6::R6Class(
 
       next_task <- next_task_to_run(self$graph, private$output)
       if (length(next_task) > 0) {
-        process <- start_task(next_task, private$output, private)
+        process <- start_task(
+          task = next_task, 
+          output = private$output, 
+          lib.loc = private$lib.loc
+        )
         success <- self$push_process(next_task, process)
         return(as.integer(success))
       }
@@ -90,10 +94,10 @@ check_design <- R6::R6Class(
     },
     push_process = function(task, x) {
       name <- names(task$v)
-      self$graph <- task_graph_set_package_status(self$graph, task$v, STATUS$`in progress`)
+      task_graph_package_status(self$graph, task$v) <- STATUS$`in progress`
       x$set_finalizer(function(process) {
         self$pop_process(name)
-        self$graph <- task_graph_set_package_status(self$graph, task$v, STATUS$done)
+        task_graph_package_status(self$graph, task$v) <- STATUS$done
       })
       private$active[[name]] <- x
       TRUE

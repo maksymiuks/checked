@@ -13,7 +13,7 @@ path_lib <- function(path) {
 }
 
 path_custom_lib <- function(path, custom) {
-  valid_name <- make.names(custom)
+  valid_name <- raw_based_hash(custom)
   dir_create(p <- file.path(path_libs(path), valid_name))
   normalizePath(p)
 }

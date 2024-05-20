@@ -23,8 +23,6 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   df_rel$package <- rev_dep_check_tasks(revdeps, repos, df_rel$alias)
   df_rel$custom <- rep(list(reversecheck_package()), times = NROW(df_dev))
   
-  
-  df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
   idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
   rbind(df_dev, df_rel)[idx, ]
 }

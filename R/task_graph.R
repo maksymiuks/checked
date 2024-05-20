@@ -15,30 +15,41 @@ task_graph_create <- function(df, repos = getOption("repos"), ...) {
 }
 
 task_edges_df <- function(df, repos) {
-  pkgs_raw <- vcapply(df$package, `[[`, "name")
-  pkgs <- unique(pkgs_raw)
+  pkgs <- vcapply(df$package, `[[`, "name")
   db <- available.packages(repos = repos)[, c("Package", uulist(DEP))]
   
   # Add custom packages to db
-  custom_pkgs_aliases <- uulist(lapply(df$custom, `[[`, "alias"))
-  custom_packages_names_map <- data.frame(
-    value = custom_pkgs_aliases,
-    hash = vcapply(custom_pkgs_aliases, raw_based_hash)
+  custom_aliases_idx <- which(vlapply(df$custom, function(x) !is.null(x$name)))
+  custom_aliases <- vcapply(df$custom[custom_aliases_idx], `[[`, "alias")
+  custom_aliases_map <- data.frame(
+    value = custom_aliases,
+    hash = vcapply(custom_aliases, raw_based_hash)
   )
-  custom_pkgs_paths <- uulist(lapply(df$custom, `[[`, "path"))
+  custom_paths <- vcapply(df$custom[custom_aliases_idx], `[[`, "path")
   # Need to use data frame to prevent dropping when assigning to 1 row matrix
-  desc <- as.data.frame(read.dcf(file.path(custom_pkgs_paths, "DESCRIPTION")))
-  desc <- desc[, intersect(colnames(db), colnames(desc)), drop = FALSE]
-  desc[, "Package"] <- custom_packages_names_map$hash
-  desc[setdiff(colnames(db), colnames(desc))] <- NA_character_
-  desc <- desc[, c("Package", uulist(DEP))]
+  desc <- drmapply(function(x, y) {
+    row <- as.data.frame(read.dcf(file.path(x, "DESCRIPTION")))
+    row <- row[, intersect(colnames(db), colnames(row)), drop = FALSE]
+    row[, "Package"] <- y
+    row[setdiff(colnames(db), colnames(row))] <- NA_character_
+    # Make sure columns are in the correct order and drop potential duplicates
+    row[, c("Package", uulist(DEP))]
+  }, custom_paths, custom_aliases_map$hash)
+  # Drop potential duplicates
+  desc <- unique(desc)
+  
+  
   # Adding checks to db and custom packages as Depends link
-  checks <- db[pkgs_raw, ]
-  custom_pkgs_aliases_raw <- replace_with_map(as.character(lapply(df$custom, `[[`, "alias")), custom_packages_names_map$value, custom_packages_names_map$hash)
-  checks[, "Depends"] <- ifelse(
-    test = custom_pkgs_aliases_raw == "NULL", 
-    yes = checks[, "Depends"],
-    no = ifelse(is.na(checks[, "Depends"]), custom_pkgs_aliases_raw, paste0(checks[, "Depends"], ", ", custom_pkgs_aliases_raw))
+  checks <- db[pkgs, ]
+  custom_aliases_hashed <- replace_with_map(
+    custom_aliases, 
+    custom_aliases_map$value, 
+    custom_aliases_map$hash
+  )
+  checks[custom_aliases_idx, "Depends"] <- ifelse(
+    test = is.na(checks[custom_aliases_idx, "Depends"]), 
+    yes = custom_aliases_hashed,
+    no = paste0(checks[custom_aliases_idx, "Depends"], ", ", custom_aliases_hashed)
   )
   checks[, "Package"] <- df$alias
   db <- rbind(db, desc, checks)
@@ -46,12 +57,12 @@ task_edges_df <- function(df, repos) {
   # Get suggests end enhances dependencies first so we can derive hard dependencies for them as well
   suggests_dependencies <- uulist(tools::package_dependencies(df$alias, db = db, which = c("Suggests", "Enhances"), recursive = FALSE))  
   # Get recursively strong dependencies for all packages 
-  core_dependencies <- tools::package_dependencies(c(df$alias, custom_pkgs_aliases, suggests_dependencies), db = db, which = "strong", recursive = TRUE)
+  core_dependencies <- tools::package_dependencies(c(df$alias, custom_aliases_map$hash, suggests_dependencies), db = db, which = "strong", recursive = TRUE)
   
   dependencies <- uulist(
     c(
       df$alias, # tools::package_dependencies do not include package itself, hence we add it at this stage
-      custom_pkgs_aliases,
+      custom_aliases_map$hash,
       suggests_dependencies, 
       core_dependencies
     )
@@ -75,8 +86,8 @@ task_edges_df <- function(df, repos) {
     })
   })
   
-  edges$dep <- replace_with_map(edges$dep, custom_packages_names_map$hash, custom_packages_names_map$value)
-  edges$root <- replace_with_map(edges$root, custom_packages_names_map$hash, custom_packages_names_map$value)
+  edges$dep <- replace_with_map(edges$dep, custom_aliases_map$hash, custom_aliases_map$value)
+  edges$root <- replace_with_map(edges$root, custom_aliases_map$hash, custom_aliases_map$value)
   edges
 }
 
@@ -107,7 +118,6 @@ task_vertices_df <- function(df, edges, repos) {
   )
   
   out$package <- packages
-  
   out
 }
 
@@ -211,6 +221,15 @@ task_graph_which_check_satisfied <- function(
 task_graph_set_package_status <- function(g, v, status) {
   if (is.character(status)) status <- STATUS[[status]]
   igraph::set_vertex_attr(g, "status", v, status)
+}
+
+task_graph_package_status <- function(g, v, status) {
+  if (is.character(status)) status <- STATUS[[status]]
+  igraph::vertex.attributes()
+}
+
+`task_graph_package_status<-` <- function(x, v, value) {
+  task_graph_set_package_status(x, v, value)
 }
 
 task_graph_update_done <- function(g, lib.loc) {
