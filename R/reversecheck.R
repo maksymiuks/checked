@@ -15,27 +15,6 @@ reversecheck <- function(pkg = "./",
   checkmate::assert_function(sampling, null.ok = TRUE)
   checkmate::assert_character(rcmdcheck_params, null.ok = TRUE)
 
-  reversecheck_initialize(
-    pkg = pkg,
-    reversecheck_dir = reversecheck_dir,
-    lib.loc = lib.loc,
-    dependencies = dependencies,
-    repos = repos,
-    sampling = sampling,
-    ...
-  )
-
-  reversecheck_run(
-    ...,
-    n_childs = n_childs,
-    repos = repos,
-    dependencies_repos,
-    filters = NULL,
-    rcmdcheck_params = rcmdcheck_params,
-    ...
-  )
-
-  #  reversecheck_report()
 
   invisible(NULL)
 }

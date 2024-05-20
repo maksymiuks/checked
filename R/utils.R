@@ -9,14 +9,13 @@ enum <- function(...) {
 }
 
 Ops.factor <- function(e1, e2) {
-  switch(.Generic, # nolint
-    ">" = as.numeric(e1) > as.numeric(e2),
-    ">=" = as.numeric(e1) > as.numeric(e2),
-    "==" = as.numeric(e1) > as.numeric(e2),
-    "<" = as.numeric(e1) > as.numeric(e2),
-    "<=" = as.numeric(e1) > as.numeric(e2),
+  # nolint start, styler: off
+  switch(.Generic,
+    ">" = , ">=" = , "==" = , "<" = , "<= " =
+      do.call(.Generic, list(as.numeric(e1), as.numeric(e2))),
     NextMethod()
   )
+  # nolint end, styler: on
 }
 
 STATUS <- enum( # nolint
@@ -26,14 +25,50 @@ STATUS <- enum( # nolint
 )
 
 DEP <- enum( # nolint
-  "Enhances",
-  "Suggests",
   "Imports",
   "Depends",
-  "LinkingTo"
+  "LinkingTo",
+  "Enhances",
+  "Suggests"
 )
 
 DEP_STRONG <- unlist(DEP[1:3]) # nolint
+
+base_pkgs <- function() {
+  ip <- installed.packages()
+  c("R", ip[!is.na(ip[, "Priority"]) & ip[, "Priority"] == "base", "Package"])
+}
+
+split_packages_names <- function(x) {
+  if (is.na(x)) {
+    x
+  } else {
+    vcapply(
+      tools:::.split_dependencies(x), 
+      "[[", 
+      "name",
+      USE.NAMES = FALSE
+    )
+  }
+  # unname(
+  #   gsub(
+  #     "^\\s+|\\s+$", "",
+  #     unlist(
+  #       strsplit(gsub("\\s*\\(.*?\\)\\s*", "", x), ",\\s*")
+  #     )
+  #   )
+  # )
+}
+
+replace_with_map <- function(x, value, replacement) {
+  m <- match(x, value)
+  x[which(!is.na(m))] <- replacement[m[!is.na(m)]]
+  x
+}
+
+raw_based_hash <- function(x) {
+  paste0(c("hash", as.character(charToRaw(x))), collapse = "")
+}
 
 check_path_is_pkg_source <- function(pkg) {
   checkmate::assert_string(pkg)
@@ -97,30 +132,26 @@ symlink_or_copy <- function(from, to) {
   }
 }
 
-is_package_installed <- function(pkg, lib.loc) {
+is_package_done <- function(pkg, lib.loc) {
   path <- find.package(pkg, lib.loc = lib.loc, quiet = TRUE)
   length(path) > 0
 }
 
-reversecheck_lib_loc <- function(lib.loc, reversecheck_dir) {
-  unique(normalizePath(c(
-    path_lib(reversecheck_dir, "old"),
-    path_lib(reversecheck_dir, "cache"),
-    lib.loc
-  ), mustWork = FALSE))
+`%||%` <- function(x, y) {
+  if (!is.null(x)) {
+    x
+  } else {
+    y
+  }
 }
 
-reversecheck_check_lib_loc <- function(pkg, lib.loc, reversecheck_dir, type = "old") {
-  unique(normalizePath(c(
-    path_lib(reversecheck_dir, type),
-    path_revdep_lib(reversecheck_dir, pkg),
-    lib.loc
-  ), mustWork = FALSE))
-}
 
 #' @import cli
 "_PACKAGE"
 
+drlapply <- function(...) do.call(rbind, lapply(...))
+drmapply <- function(...) do.call(rbind, mapply(..., USE.NAMES = FALSE, SIMPLIFY = FALSE))
+uulist <- function(...) unique(as.character(unlist(...)))
 `%||%` <- function(lhs, rhs) if (is.null(lhs)) rhs else lhs
 vcapply <- function(...) vapply(..., FUN.VALUE = character(1L))
 vlapply <- function(...) vapply(..., FUN.VALUE = logical(1L))

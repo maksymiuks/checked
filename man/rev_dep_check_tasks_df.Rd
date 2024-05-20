@@ -4,12 +4,7 @@
 \alias{rev_dep_check_tasks_df}
 \title{Build Plan for Checking Reverse Dependencies from Package Source}
 \usage{
-rev_dep_check_tasks_df(
-  path,
-  output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
-  ...,
-  restore
-)
+rev_dep_check_tasks_df(path, repos = getOption("repos"))
 }
 \arguments{
 \item{path}{A file path to a local package source code directory of the
