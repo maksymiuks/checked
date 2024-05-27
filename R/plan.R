@@ -21,15 +21,16 @@ check_design <- R6::R6Class(
     #' A dependency graph, storing information about which dependencies
     #' are required prior to execution of each check task.
     graph = NULL,
-
+    # output root directory
+    output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
     #' Initialize a new check design
     #' repos passed here will be used only fetch dependencies. Source of packages
     #' to be check are embedded in the df and might very well be different repos.
     initialize = function(
       df, n = 2L, output = tempfile(paste(packageName(), Sys.Date(), sep = "-")), 
       lib.loc = .libPaths(), repos = getOption("repos"), ...) {
+      self$output <- output
       private$n <- n
-      private$output <- output
       private$lib.loc <- lib.loc
       private$repos <- repos
       
@@ -71,11 +72,12 @@ check_design <- R6::R6Class(
         return(0L)
       }
 
-      next_task <- next_task_to_run(self$graph, private$output)
+      next_task <- next_task_to_run(self$graph, self$output)
       if (length(next_task) > 0) {
         process <- start_task(
           task = next_task, 
-          output = private$output, 
+          g = self$graph,
+          output = self$output, 
           lib.loc = private$lib.loc
         )
         success <- self$push_process(next_task, process)
@@ -92,11 +94,11 @@ check_design <- R6::R6Class(
       private$active[[name]] <- NULL
     },
     push_process = function(task, x) {
-      name <- names(task$v)
-      task_graph_package_status(self$graph, task$v) <- STATUS$`in progress`
+      name <- task_graph_task_name(self$graph, task)
+      task_graph_package_status(self$graph, task) <- STATUS$`in progress`
       x$set_finalizer(function(process) {
         self$pop_process(name)
-        task_graph_package_status(self$graph, task$v) <- STATUS$done
+        task_graph_package_status(self$graph, task) <- STATUS$done
       })
       private$active[[name]] <- x
       TRUE
@@ -106,8 +108,6 @@ check_design <- R6::R6Class(
     }
   ),
   private = list(
-    # output root directory
-    output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
     # maximum child process count
     n = 2L,
     # lib.loc of allowed packages,

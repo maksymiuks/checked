@@ -96,18 +96,14 @@ task_vertices_df <- function(df, edges, repos) {
   custom_pkgs_aliases <- uulist(lapply(df$custom, `[[`, "alias"))
   pkgs <- unique(vcapply(df$package, `[[`, "name"))
   task_type <- ifelse(vertices %in% df$alias, "check", "install")
-
   
-  packages <- lapply(vertices, function(v) {
+  spec <- lapply(vertices, function(v) {
     if (v %in% df$alias) {
-      v_pkg <- df$package[[which(df$alias == v)]]
+      df$package[[which(df$alias == v)]]
     } else if (v %in% custom_pkgs_aliases) {
       df$custom[[head(which(as.character(lapply(df$custom, `[[`, "alias")) == v), 1)]]
     } else {
-      reversecheck_package(
-        name = v,
-        repos = repos
-      )
+      install_task_spec(name = v, repos = repos)
     }
   })
   
@@ -117,7 +113,7 @@ task_vertices_df <- function(df, edges, repos) {
     custom = vertices %in% custom_pkgs_aliases
   )
   
-  out$package <- packages
+  out$spec <- spec
   out
 }
 
@@ -209,9 +205,27 @@ task_graph_which_check_satisfied <- function(
     ...,
     dependencies = "all",
     status = STATUS$pending) {
+  
   task_graph_which_satisfied(
     g,
     igraph::V(g)[igraph::V(g)$type == "check"],
+    ...,
+    dependencies = dependencies,
+    status = status
+  )
+}
+
+#' @describeIn dep_graph_which_satisfied
+#' List root vertices whose dependencies are all satisfied
+task_graph_which_install_satisfied <- function(
+    g,
+    ...,
+    dependencies = "strong",
+    status = STATUS$pending) {
+  
+  task_graph_which_satisfied(
+    g,
+    igraph::V(g)[igraph::V(g)$type == "install"],
     ...,
     dependencies = dependencies,
     status = status
@@ -223,13 +237,20 @@ task_graph_set_package_status <- function(g, v, status) {
   igraph::set_vertex_attr(g, "status", v, status)
 }
 
-task_graph_package_status <- function(g, v, status) {
-  if (is.character(status)) status <- STATUS[[status]]
-  igraph::vertex.attributes()
+task_graph_package_status <- function(g, v) {
+  igraph::vertex.attributes(g, v)$status
 }
 
 `task_graph_package_status<-` <- function(x, v, value) {
   task_graph_set_package_status(x, v, value)
+}
+
+task_graph_task_spec <- function(g, v) {
+  igraph::vertex.attributes(g, v)$spec[[1]]
+}
+
+task_graph_task_name <- function(g, v) {
+  igraph::vertex.attributes(g, v)$name
 }
 
 task_graph_update_done <- function(g, lib.loc) {

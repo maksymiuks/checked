@@ -28,6 +28,12 @@ path_logs <- function(path) {
   normalizePath(p)
 }
 
+path_sources <- function(path) {
+  dir_create(p <- file.path(path, "sources"))
+  normalizePath(p)
+}
+
 path_check_output <- function(path, check) {
-  "placeholder"
+  dir_create(p <- file.path(path, "checks"))
+  normalizePath(file.path(p, check), mustWork = FALSE)
 }
