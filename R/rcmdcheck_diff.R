@@ -39,7 +39,7 @@ diff.rcmdcheck <- function(new, old, issues = ISSUES_TYPES, ...) {
 }
 
 print.rcmdcheck_diff <- function(x, ...) {
-  cat("R CMD check diff \n\n")
+  cat("R CMD check diff \n")
   for (i in ISSUES_TYPES) {
     status <- if (length(x[[i]]$issues) > 0) {
       "NEW ISSUES"
@@ -50,13 +50,15 @@ print.rcmdcheck_diff <- function(x, ...) {
     }
 
     cat(sprintf("%s: %s", i, status), "\n")
-    print(x[[i]]$issues)
-    print(x[[i]]$potential_issues)
+    if (status != "OK") {
+      print(x[[i]]$issues)
+      print(x[[i]]$potential_issues)
+    }
   }
 }
 
 print.issues <- function(x, ...) {
-  cat(x, sep = "\n\n")
+  cat(x, sep = "\n")
 }
 
 print.potential_issues <- function(x, ...) {
@@ -65,7 +67,7 @@ print.potential_issues <- function(x, ...) {
       strsplit(x$old[i], "\n")[[1]],
       strsplit(x$new[i], "\n")[[1]]
     ))
-    cat("\n\n\n")
+    cat("\n")
   }
   invisible(x)
 }
@@ -99,7 +101,7 @@ rcmdcheck_to_json <- function(rcheck, file = NULL) {
   )
 
   if (!is.null(file)) {
-    jsonlite::write_json(json, file)
+    jsonlite::write_json(json, file, auto_unbox = TRUE)
   }
 
   json
@@ -108,8 +110,9 @@ rcmdcheck_to_json <- function(rcheck, file = NULL) {
 
 rcmdcheck_from_json <- function(file) {
   checkmate::assert_file_exists(file, access = "r")
+  parsed <- jsonlite::fromJSON(file)
   structure(
-    jsonlite::fromJSON(file),
+    if (is.character(parsed)) jsonlite::fromJSON(parsed) else parsed,
     class = "rcmdcheck"
   )
 }

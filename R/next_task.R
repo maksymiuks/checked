@@ -1,29 +1,16 @@
 next_task_to_run <- function(g, output) {
   checks <- task_graph_which_check_satisfied(g)
-  installs <- task_graph_which_satisfied_strong(g)
+  installs <- task_graph_which_install_satisfied(g)
   
   # Prioritize checks overs installs
   v <- igraph::V(g)[c(checks, installs)]
-  next_task <- head(v, 1L)
-  if (length(next_task) > 0) {
-    attrs <- igraph::vertex.attributes(g, next_task)
-    
-    structure(
-      list(
-        v = next_task,
-        install_lib = task_get_install_lib(g, next_task, output),
-        lib.loc = task_get_lib_loc(g, next_task, output),
-        package = attrs$package
-      ),
-      class = attrs$type
-    )
-  }
+  head(v, 1L)
 }
 
 task_get_lib_loc <- function(g, node, output) {
   nhood <- task_graph_neighborhoods(g, node)[[1]]
   name <- names(node) %||% node
-  nhood <- nhood[names(nhood) != name]
+  nhood <- nhood[names(nhood) != .env$name]
   # Custom packages are possible only for the check type nodes which are
   # always terminal. Therefore if we sort nhood making custom packages appear
   # first, their lib will always be prioritized
@@ -39,37 +26,66 @@ task_get_lib_loc <- function(g, node, output) {
 task_get_install_lib <- function(g, node, output) {
   attributes <- igraph::vertex.attributes(g, index = node)
   if (attributes$type == "check") {
-    path_check_output(output, attributes$package[[1]]$alias)
+    path_check_output(output, attributes$spec[[1]]$alias)
   } else if (attributes$custom) {
-    path_custom_lib(output, attributes$package[[1]]$alias)
+    path_custom_lib(output, attributes$spec[[1]]$alias)
   } else {
     path_lib(output)
   }
 }
 
-start_task <- function(task, ...) {
-  UseMethod("start_task")
+start_task <- function(task, g, ...) {
+  UseMethod("start_task", task_graph_task_spec(g, task))
 }
 
-start_task.install <- function(task, output, lib.loc, ...) {
-  pkg <- task$package[[1]]
-  package <- if (is.null(pkg$path)) pkg$name else pkg$path
-  libpaths <- c(task$lib.loc, lib.loc)
+start_task.install_task_spec <- function(task, g, output, lib.loc, ...) {
+  spec <- task_graph_task_spec(g, task)
+  package <- if (is.null(spec$path)) spec$name else spec$path
+  libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
   install_packages_process$new(
     package,
-    lib = task$install_lib,
+    lib = path_lib(output),
     libpaths = libpaths,
-    repos = pkg$repos,
-    type = pkg$type,
-    log = path_package_install_log(output, pkg$alias)
+    repos = spec$repos,
+    type = spec$type,
+    INSTALL_opts = spec$INSTALL_opts,
+    log = path_package_install_log(output, spec$alias),
+    env = spec$env
   )
 }
 
-start_task.check <- function(task, output, lib.loc, ...) {
-  process <- mock_process$new(runif(1, 15, 25), class = "revdep_process") # fake process, lasts ~20s
-  # lib.loc = task$lib.loc
-  # this process needs to:
-  #   - set up libpaths
-  #   - set up appropriate, restricted library, linking to cache
-  #   - run r cmd check
+start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
+  spec <- task_graph_task_spec(g, task)
+  package <- if (is.null(spec$path)) spec$name else spec$path
+  libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
+  install_packages_process$new(
+    package,
+    lib = path_custom_lib(output, spec$alias),
+    libpaths = libpaths,
+    repos = spec$repos,
+    type = spec$type,
+    INSTALL_opts = spec$INSTALL_opts,
+    log = path_package_install_log(output, spec$alias),
+    env = spec$env
+  )
+}
+
+start_task.check_task_spec <- function(task, g, output, lib.loc, ...) {
+  spec <- task_graph_task_spec(g, task)
+  libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
+  path <- if (!file.exists(spec$path)) {
+    fetch_package_source(spec$path, path_sources(output))
+  } else {
+    spec$path
+  }
+  
+  check_process$new(
+    path = path,
+    check_dir = path_check_output(output, spec$alias),
+    libpath = libpaths,
+    repos = spec$repos,
+    args = spec$check_args,
+    build_args = spec$build_args,
+    env = spec$env
+  )
 }

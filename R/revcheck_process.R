@@ -13,6 +13,13 @@ RE_CHECK <- paste0(
   "(?=\n|$)"         # terminated by a new line (or end of string)
 )
 # nolint end, styler: on
+DEFAULT_R_CMD_CHECK_VARIABLES <- c(
+  "_R_CHECK_FORCE_SUGGESTS_" = FALSE,
+  "_R_CHECK_RD_XREFS_" = FALSE,
+  "_R_CHECK_SYSTEM_CLOCK_" = FALSE
+)
+DEFAULT_BUILD_ARGS <- c("--no-build-vignettes", "--no-manual")
+DEFAULT_CHECK_ARGS <- c("--timings", "--ignore-vignettes", "--no-manual")
 
 #' @importFrom R6 R6Class
 #' @importFrom rcmdcheck rcmdcheck_process
@@ -44,6 +51,7 @@ check_process <- R6::R6Class(
       if (!self$is_alive()) callback()
     },
     finalize = function() {
+      rcmdcheck_to_json(self$parse_results(), file.path(private$check_dir, "result.json"))
       if (is.function(f <- private$finalize_callback)) f(self)
       if ("finalize" %in% ls(super)) super$finalize()
     },

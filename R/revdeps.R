@@ -11,31 +11,34 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   )
   
   df_dev$alias <- paste0(df_dev$alias, " (dev)")
-  df_dev$package <- rev_dep_check_tasks(revdeps, repos, df_dev$alias)
-  df_dev$custom <- rep(list(reversecheck_package(
+  df_dev$package <- rev_dep_check_tasks_specs(revdeps, repos, df_dev$alias, "new")
+  df_dev$custom <- rep(list(custom_install_task_spec(
     alias = paste0(package, " (dev)"),
     name = package,
-    path = path
+    path = path,
+    type = "source"
   )), times = NROW(df_dev))
   
-  
   df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
-  df_rel$package <- rev_dep_check_tasks(revdeps, repos, df_rel$alias)
-  df_rel$custom <- rep(list(reversecheck_package()), times = NROW(df_dev))
-  
+  df_rel$package <- rev_dep_check_tasks_specs(revdeps, repos, df_rel$alias, "old")
+  df_rel$custom <- rep(list(custom_install_task_spec()), times = NROW(df_dev))
+
   idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
   rbind(df_dev, df_rel)[idx, ]
 }
 
-rev_dep_check_tasks <- function(packages, repos, aliases = packages) {
+rev_dep_check_tasks_specs <- function(packages, repos, aliases = packages, revdep) {
   db <- available.packages(repos = repos)
   mapply(function(p, a) {
-    reversecheck_package(
+    revdep_check_task_spec(
       name = p,
       alias = a,
       path = get_package_source(p, db = db),
-      type = "source",
-      repos = repos
+      repos = repos,
+      env = DEFAULT_R_CMD_CHECK_VARIABLES,
+      check_args = DEFAULT_CHECK_ARGS,
+      build_args = DEFAULT_BUILD_ARGS,
+      revdep = revdep
     )
   }, packages, aliases, SIMPLIFY = FALSE, USE.NAMES = FALSE)
 }
@@ -53,12 +56,17 @@ get_package_source <- function(revdep, repos, db = NULL, destdir = NULL) {
   )
   
   if (!is.null(destdir)) {
-    bn <- basename(archive_url)
-    dir_create(tmpdir <- file.path(tempfile("reversecheck_"), revdep))
-    destfile <- file.path(tmpdir, bn)
-    utils::download.file(archive_url, destfile = destfile)
-    utils::untar(destfile, exdir = normalizePath(destdir))
+    fetch_package_source(archive_url, destdir)
   } else {
     archive_url
   }
+}
+
+fetch_package_source <- function(archive_url, destdir) {
+  bn <- basename(archive_url)
+  destfile <- file.path(destdir, bn)
+  if (!file.exists(destfile)) {
+    utils::download.file(archive_url, destfile = destfile, quiet = TRUE)
+  }
+  destfile
 }
