@@ -14,29 +14,40 @@ new_rev_dep_check_design <- function(x, ...) {
 #'   print(table(igraph::vertex.attributes(plan$graph)$status |> as.character()))
 #'   plan$start_next_task()
 #' }
-#' }
+#'
 check_design <- R6::R6Class(
   "check_design",
   public = list(
     #' A dependency graph, storing information about which dependencies
     #' are required prior to execution of each check task.
     graph = NULL,
-    # output root directory
+
+    #' source of check design
+    input = NULL,
+
+    #' output root directory
     output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
+
     #' Initialize a new check design
-    #' repos passed here will be used only fetch dependencies. Source of packages
-    #' to be check are embedded in the df and might very well be different repos.
+    #' repos passed here will be used only fetch dependencies. Source of
+    #' packages to be check are embedded in the df and might very well be
+    #' different repos.
     initialize = function(
-      df, n = 2L, output = tempfile(paste(packageName(), Sys.Date(), sep = "-")), 
-      lib.loc = .libPaths(), repos = getOption("repos"), ...) {
+        # styler: off
+        df,
+        n = 2L,
+        output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
+        lib.loc = .libPaths(),
+        repos = getOption("repos"),
+        ...) { # styler: on
+      self$input <- df
       self$output <- output
       private$n <- n
       private$lib.loc <- lib.loc
       private$repos <- repos
-      
+
       g <- task_graph_create(df, repos)
       self$graph <- task_graph_update_done(g, lib.loc)
-      
     },
 
     #' Get Active Processes
@@ -75,11 +86,12 @@ check_design <- R6::R6Class(
       next_task <- next_task_to_run(self$graph, self$output)
       if (length(next_task) > 0) {
         process <- start_task(
-          task = next_task, 
+          task = next_task,
           g = self$graph,
-          output = self$output, 
+          output = self$output,
           lib.loc = private$lib.loc
         )
+
         success <- self$push_process(next_task, process)
         return(as.integer(success))
       }
@@ -94,6 +106,7 @@ check_design <- R6::R6Class(
       private$active[[name]] <- NULL
     },
     push_process = function(task, x) {
+      task_graph_task_process(self$graph, task) <- x
       name <- task_graph_task_name(self$graph, task)
       task_graph_package_status(self$graph, task) <- STATUS$`in progress`
       x$set_finalizer(function(process) {
@@ -144,7 +157,7 @@ new_check_tasks_df <- function(x) {
 
 #' @export
 print.check_design <- function(x, ...) {
-  print(x$checks)
+  print(x$input)
 }
 
 #' @export
@@ -181,14 +194,14 @@ as_check_tasks_df.character <- function(x, ...) {
 #   if (missing(path) || !file.exists(path)) {
 #     return(character(0L))
 #   }
-# 
+#
 #   restore <- if (interactive() && is.na(restore)) {
 #     startsWith(toupper(trimws(readline(paste0(
 #       "Output path '", path, "' already exists. Do you want ",
 #       "to attempt to recover a previous run? [Y/n]"
 #     )))), "Y")
 #   }
-# 
+#
 #   if (isFALSE(restore)) {
 #     unlink(path, recursive = TRUE)
 #     return(character(0L))

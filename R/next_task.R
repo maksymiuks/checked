@@ -1,7 +1,7 @@
 next_task_to_run <- function(g, output) {
   checks <- task_graph_which_check_satisfied(g)
   installs <- task_graph_which_install_satisfied(g)
-  
+
   # Prioritize checks overs installs
   v <- igraph::V(g)[c(checks, installs)]
   head(v, 1L)
@@ -15,11 +15,11 @@ task_get_lib_loc <- function(g, node, output) {
   # always terminal. Therefore if we sort nhood making custom packages appear
   # first, their lib will always be prioritized
   attributes <- igraph::vertex.attributes(g, index = nhood)
-  
+
   paths <- vcapply(nhood, function(v) {
     task_get_install_lib(g, v, output)
   })
-  
+
   unique(paths[order(attributes$custom, decreasing = TRUE)])
 }
 
@@ -78,7 +78,7 @@ start_task.check_task_spec <- function(task, g, output, lib.loc, ...) {
   } else {
     spec$path
   }
-  
+
   check_process$new(
     path = path,
     check_dir = path_check_output(output, spec$alias),

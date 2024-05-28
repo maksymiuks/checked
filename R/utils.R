@@ -8,6 +8,7 @@ enum <- function(...) {
   lapply(f, identity)
 }
 
+#' @export
 Ops.factor <- function(e1, e2) {
   # nolint start, styler: off
   switch(.Generic,
@@ -44,8 +45,8 @@ split_packages_names <- function(x) {
     x
   } else {
     vcapply(
-      tools:::.split_dependencies(x), 
-      "[[", 
+      tools:::.split_dependencies(x),
+      "[[",
       "name",
       USE.NAMES = FALSE
     )
