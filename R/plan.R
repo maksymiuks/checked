@@ -64,7 +64,7 @@ check_design <- R6::R6Class(
     #' @return A logical value, indicating whether processes are actively
     #'   running.
     step = function() {
-      while (res <- self$start_next_task()) {}
+      while ((res <- self$start_next_task()) > 0) {}
       res >= 0
     },
 

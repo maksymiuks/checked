@@ -8,7 +8,7 @@ format_status_line_ansi.check_process <- function(
     process,
     ...,
     width = getOption("width", 80L)) {
-  check_codes <- as.numeric(process$get_checks())
+  checks <- process$get_checks()
 
   # runtime of process
   process_time <- paste0(format_time(process$get_duration()), " ")
@@ -22,14 +22,14 @@ format_status_line_ansi.check_process <- function(
   }
 
   msg <- ""
-  status <- max(check_codes, -1)
-  if (length(check_codes) == 0) {
+  status <- max(as.numeric(checks), -1)
+  if (length(checks) == 0) {
     # have not hit checks yet
     msg <- "starting ..."
     status <- process$spin()
   } else if (process$is_alive()) {
     # processing checks
-    msg <- paste("checking", names(tail(check_codes, 1)), "...")
+    msg <- paste("checking", names(tail(checks, 1)), "...")
     status <- process$spin()
     process_time <- cli::col_cyan(process_time)
   } else {
@@ -86,7 +86,7 @@ report_initialize.reporter_ansi_tty <- function(
     format_done = "Finished in {cli::pb_elapsed}",
     total = sum(v$type == "check"),
     clear = FALSE,
-    auto_terminate = FALSE,
+    auto_terminate = TRUE,
     .envir = reporter,
   )
 }
@@ -96,8 +96,6 @@ report_initialize.reporter_ansi_tty <- function(
 report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
   v <- igraph::V(design$graph)
   n_char_titles <- max(nchar(v$name[v$type == "check"]))
-
-  browser()
 
   # add newly started task status
   new_idx <- which(v$status > STATUS$pending)
@@ -111,26 +109,34 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
 
   # for each not-yet finished task, report status
   for (idx in which(reporter$status < STATUS$done)) {
+    # update reported status
     alias <- names(reporter$status)[[idx]]
-    process_idx <- which(v$name == alias)
+    v_idx <- which(v$name == alias)
+    reporter$status[[idx]] <- v$status[[v_idx]]
 
-    is_new <- process_idx %in% new_idx
-    n_lines <- length(reporter$status) - idx + 1L
-    width <- cli::console_width() - n_char_titles - 2
-    task_name <- v$name[[process_idx]]
-    process <- task_graph_task_process(design$graph, task_name)
-
+    # skip if not a R CMD check process
+    process <- task_graph_task_process(design$graph, v_idx)
     if (inherits(process, "install_package_process")) next
 
+    # print header if this is the first status line of the reporter
     if (reporter$header) {
       cat(
+        ansi_line_erase(),
         strrep(" ", n_char_titles + 2),
-        cli_table_row("S", "OK", "N", "W", "E", title = TRUE), "\n",
+        cli_table_row("S", "OK", "N", "W", "E", title = TRUE),
+        "\n",
         sep = ""
       )
       reporter$header <- FALSE
     }
 
+    # derive reporter information
+    is_new <- v_idx %in% new_idx
+    n_lines <- length(reporter$status) - idx + 1L
+    width <- cli::console_width() - n_char_titles - 2
+    task_name <- v$name[[v_idx]]
+
+    # report status line
     cat(
       if (!is_new) ansi_move_line_rel(n_lines),
       if (!is_new) ansi_line_erase(),
@@ -139,9 +145,6 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
       if (!is_new) ansi_move_line_rel(-n_lines) else "\n",
       sep = ""
     )
-
-    # update last reported status flag, which may lag behind actual status
-    reporter$status[[idx]] <- v$status[[idx]]
   }
 
   is_inst <- vlapply(design$active_processes(), inherits, "install_package_process") # nolint
@@ -164,6 +167,5 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
 #' @export
 report_finalize.reporter_ansi_tty <- function(reporter, design) { # nolint
   report_status(reporter, design) # report completions of final processes
-  cli::cli_progress_done(.envir = reporter)
   cli::ansi_show_cursor()
 }
