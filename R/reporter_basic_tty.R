@@ -36,7 +36,7 @@ report_status.reporter_basic_tty <- function(reporter, design, envir) { # nolint
         "in progress" = cli::cli_fmt(cli::cli_text("started")),
         "done" = {
           dur <- if (!is.null(node$process$get_duration)) {
-            node$process$get_duration() # nolint
+            node$process$get_duration()
           }
           if (node$type == "check") {
             ewn <- c("ERROR", "WARNING", "NOTE")
