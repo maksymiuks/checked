@@ -47,8 +47,6 @@ check_process <- R6::R6Class(
       args <- as.list(match.call(rcmdcheck::rcmdcheck, expand.dots = TRUE)[-1])
       args <- lapply(args, eval, envir = parent.frame())
 
-      args$path <- "../praise"
-
       private$args <- args
       private$throttle <- throttle()
       private$spinners <- list(
