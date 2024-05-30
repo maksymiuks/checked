@@ -49,3 +49,6 @@ po/*~
 rsconnect/
 .Rproj.user
 reversecheck.Rproj
+
+# README.Rmd artifacts
+*.html
