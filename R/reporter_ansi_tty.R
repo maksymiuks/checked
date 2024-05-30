@@ -61,15 +61,9 @@ report_initialize.reporter_ansi_tty <- function(
     reporter,
     design,
     envir = parent.frame()) {
-  # start with initialized-as-completed tasks
-  v <- igraph::V(design$graph)
-  which_done <- v$status == STATUS$done
-  done <- v[which_done]$status
-  names(done) <- v$name[which_done]
-
   # named factor vector, names as task aliases and value of last reported status
   reporter$header <- TRUE
-  reporter$status <- done
+  reporter$status <- STATUS$done[c()]
 
   # hide cursor when initializer enters, ensure its restored even if interrupted
   cli::ansi_hide_cursor()
@@ -84,7 +78,7 @@ report_initialize.reporter_ansi_tty <- function(
     extra = list(message = ""),
     format = "ETA {cli::pb_eta} ({cli::pb_current}/{cli::pb_total}) [{cli::pb_elapsed}] {cli::pb_extra$message}", # nolint
     format_done = "Finished in {cli::pb_elapsed}",
-    total = sum(v$type == "check"),
+    total = sum(igraph::V(design$graph)$type == "check"),
     clear = FALSE,
     auto_terminate = TRUE,
     .envir = reporter,
@@ -95,29 +89,13 @@ report_initialize.reporter_ansi_tty <- function(
 #' @export
 report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
   v <- igraph::V(design$graph)
-  n_char_titles <- max(nchar(v$name[v$type == "check"]))
+  v_checks <- v[v$type == "check"]
+  n_char_titles <- max(nchar(v_checks$name))
 
   # add newly started task status
-  new_idx <- which(v$status > STATUS$pending)
-  new_idx <- new_idx[!v$name[new_idx] %in% names(reporter$status)]
+  new_idx <- which(v_checks$status > STATUS$pending)
+  new_idx <- new_idx[!v_checks$name[new_idx] %in% names(reporter$status)]
   if (length(new_idx) > 0) {
-    # always start by reporting in progress, even if finished before reporting
-    new <- rep_len(STATUS$`in progress`, length(new_idx))
-    names(new) <- v$name[new_idx]
-    reporter$status <- c(reporter$status, new)
-  }
-
-  # for each not-yet finished task, report status
-  for (idx in which(reporter$status < STATUS$done)) {
-    # update reported status
-    alias <- names(reporter$status)[[idx]]
-    v_idx <- which(v$name == alias)
-    reporter$status[[idx]] <- v$status[[v_idx]]
-
-    # skip if not a R CMD check process
-    process <- task_graph_task_process(design$graph, v_idx)
-    if (inherits(process, "install_package_process")) next
-
     # print header if this is the first status line of the reporter
     if (reporter$header) {
       cat(
@@ -130,19 +108,33 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
       reporter$header <- FALSE
     }
 
+    # always start by reporting in progress, even if finished before reporting
+    new <- rep_len(STATUS$`in progress`, length(new_idx))
+    names(new) <- v_checks$name[new_idx]
+    reporter$status <- c(reporter$status, new)
+    cat(strrep("\n", length(new_idx)))
+  }
+
+  # for each not-yet finished task, report status
+  for (idx in which(reporter$status < STATUS$done)) {
+    # update reported status
+    alias <- names(reporter$status)[[idx]]
+    v_idx <- which(v_checks$name == alias)
+    reporter$status[[idx]] <- v_checks$status[[v_idx]]
+
     # derive reporter information
-    is_new <- v_idx %in% new_idx
     n_lines <- length(reporter$status) - idx + 1L
-    width <- cli::console_width() - n_char_titles - 2
-    task_name <- v$name[[v_idx]]
+    width <- cli::console_width() - n_char_titles - 2L
+    task_name <- v_checks$name[[v_idx]]
+    process <- task_graph_task_process(design$graph, v_checks[[v_idx]])
 
     # report status line
     cat(
-      if (!is_new) ansi_move_line_rel(n_lines),
-      if (!is_new) ansi_line_erase(),
+      ansi_move_line_rel(n_lines),
+      ansi_line_erase(),
       " ", strrep(" ", n_char_titles - nchar(task_name)), task_name, " ",
       format_status_line_ansi(process, width = width),
-      if (!is_new) ansi_move_line_rel(-n_lines) else "\n",
+      ansi_move_line_rel(-n_lines),
       sep = ""
     )
   }

@@ -1,0 +1,63 @@
+---
+title: reversecheck
+output:
+  github_document:
+always_allow_html: yes
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README",
+  out.width = "100%",
+  cache = TRUE,
+  asciicast_theme = if (Sys.getenv("IN_PKGDOWN") == "true") {
+    "pkgdown"
+  } else {
+    "readme"
+  }
+)
+
+Sys.setenv(CLI_TICK_TIME = "100")
+asciicast::init_knitr_engine(
+  startup = bquote({
+    options(repos = .(getOption("repos")))
+  }),
+  timeout = 300,
+  echo = FALSE,
+  echo_input = FALSE
+)
+```
+
+> Batch `R CMD check` management
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml)
+[![CRAN](https://img.shields.io/cran/v/reversecheck.svg)](https://cran.r-project.org/package=reversecheck)
+[![coverage](https://img.shields.io/codecov/c/github/maksimiuks/reversecheck/main.svg)](https://app.codecov.io/gh/maksimiuks/reversecheck?branch=main) 
+<!-- badges: end -->
+
+
+# Reverse-dependency Checks
+
+```{sh echo = FALSE, results = "hide"}
+# praise chosen for having few direct and reverse dependencies
+rm -rf /tmp/praise
+git clone https://github.com/gaborcsardi/praise /tmp/praise
+```
+
+```r
+library(reversecheck)
+run("/home/dev/praise")
+```
+```{asciicast cache = FALSE}
+#' timeout: 300
+#' idle_time_limit: 300
+
+reversecheck::run("/tmp/praise")
+cat()  # needed for asciicast capture?
+```
+
