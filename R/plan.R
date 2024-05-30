@@ -57,7 +57,7 @@ check_design <- R6::R6Class(
 
     #' Terminate Design Processes
     terminate = function() {
-      invisible(lapply(private$active, function(process) process$kill()))
+      invisible(lapply(private$active, function(process) process$finalize()))
     },
 
     #' Fill Available Processes with Tasks
@@ -74,7 +74,9 @@ check_design <- R6::R6Class(
     start_next_task = function() {
       # finalize any finished processes
       for (process in private$active) {
-        if (!process$is_alive()) process$finalize()
+        if (!process$is_alive()) {
+          process$finalize()
+        }
       }
 
       # if all available processes are in use, terminate early

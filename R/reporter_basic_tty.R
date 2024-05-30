@@ -2,32 +2,48 @@
 report_initialize.reporter_basic_tty <- function(
     # nolint
     reporter,
-    plan,
+    design,
     envir = parent.frame()) {
+  # start with initialized-as-completed tasks
+  v <- igraph::V(design$graph)
+  which_done <- v$status == STATUS$done
+  done <- v[which_done]$status
+  names(done) <- v$name[which_done]
+
+  # named factor vector, names as task aliases and value of last reported status
+  reporter$status <- done
   reporter$time_start <- Sys.time()
-  reporter$statuses <- new.env(parent = emptyenv())
+
   cli::cli_text("<", utils::packageName(), "> Checks")
 }
 
 #' @export
-report_status.reporter_basic_tty <- function(reporter, plan, envir) { # nolint
+report_status.reporter_basic_tty <- function(reporter, design, envir) { # nolint
   cli_theme()
-  statuses <- plan$statuses()
-  for (i in seq_along(plan$queue)) {
+  for (i in seq_along(igraph::V(design$graph))) {
+    node <- igraph::V(design$graph)[[i]]
+
     # skip if queued, but not started
-    if (statuses[[i]] <= 1) next
+    if (node$status <= STATUS$`pending`) next
+
+    # NOTE: for some reason check process never finishes unless we poll checks
+    if (node$type == "check") node$process$poll_output()
 
     # report stating of new checks
-    plan$queue[[i]]$process$poll_output()
-    name <- plan$queue[[i]]$name
-    if (!identical(statuses[[i]], reporter$statuses[[name]])) {
-      status <- switch(statuses[[i]], # nolint
-        "1" = "queued",
-        "2" = cli::cli_fmt(cli::cli_text("started")),
-        "3" = {
-          dur <- plan$queue[[i]]$process$get_duration() # nolint
-          ewn <- c("ERROR", "WARNING", "NOTE")
-          ewn <- plan$queue[[i]]$process$get_status_counts()[ewn]
+    if (!identical(node$status, reporter$statuses[[node$name]])) {
+      status <- switch(as.character(node$status), # nolint
+        "pending" = "queued",
+        "in progress" = cli::cli_fmt(cli::cli_text("started")),
+        "done" = {
+          dur <- if (!is.null(node$process$get_duration)) {
+            node$process$get_duration() # nolint
+          }
+          if (node$type == "check") {
+            ewn <- c("ERROR", "WARNING", "NOTE")
+            ewn <- table(node$process$get_checks())[ewn]
+          } else {
+            ewn <- c(0, 0, 0)
+          }
           cli::cli_fmt(cli::cli_text(
             "finished",
             if (sum(ewn) > 0) " with ",
@@ -36,20 +52,23 @@ report_status.reporter_basic_tty <- function(reporter, plan, envir) { # nolint
               if (ewn[[2]] > 0) cli::format_inline("{.warn {ewn[[2]]} WARNING{?/S}}"),
               if (ewn[[3]] > 0) cli::format_inline("{.note {ewn[[3]]} NOTE{?/S}}")
             )),
-            cli::format_inline(" {.time_taken ({format_time(dur)})}")
+            if (!is.null(dur)) cli::format_inline(" {.time_taken ({format_time(dur)})}")
           ))
         }
       )
-      cli::cli_text(cli::col_cyan("[check] "), "{.pkg {name}} {status}")
-      reporter$statuses[[name]] <- statuses[[i]]
+
+      time <- Sys.time() - reporter$time_start # nolint
+      prefix <- cli::col_cyan("[{format_time(time)}][{node$type}] ")
+      cli::cli_text(prefix, "{.pkg {node$name}} {status}")
+      reporter$statuses[[node$name]] <- node$status
     }
   }
 }
 
 #' @export
-report_finalize.reporter_basic_tty <- function(reporter, plan) { # nolint
+report_finalize.reporter_basic_tty <- function(reporter, design) { # nolint
   cli_theme()
-  report_status(reporter, plan) # report completions of final processes
-  time <- format_time(Sys.time() - reporter$time_start)
+  report_status(reporter, design) # report completions of final processes
+  time <- format_time(Sys.time() - reporter$time_start) # nolint
   cli::cli_text("Finished in {.time_taken {time}}")
 }

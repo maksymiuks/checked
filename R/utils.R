@@ -10,12 +10,12 @@ enum <- function(...) {
 
 Ops.factor <- function(e1, e2) {
   # nolint start, styler: off
-  switch(.Generic,
-    ">" = , ">=" = , "==" = , "<" = , "<= " =
-      do.call(.Generic, list(as.numeric(e1), as.numeric(e2))),
-    NextMethod()
-  )
+  switch(.Generic, ">" = , ">=" = , "==" = , "<" = , "<=" = {
+    return(do.call(.Generic, list(as.numeric(e1), as.numeric(e2))))
+  })
   # nolint end, styler: on
+
+  NextMethod()
 }
 
 STATUS <- enum( # nolint
