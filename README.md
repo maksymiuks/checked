@@ -20,6 +20,6 @@ run("/home/dev/praise")
 ```
 
 <picture>
-<source media="(prefers-color-scheme: dark)" srcset="man/figures/README/unnamed-chunk-3-dark.svg">
-<img src="man/figures/README/unnamed-chunk-3.svg" width="100%" />
+<source media="(prefers-color-scheme: dark)" srcset="man/figures/README/ansi-tty-example-dark.svg">
+<img src="man/figures/README/ansi-tty-example.svg" width="100%" />
 </picture>

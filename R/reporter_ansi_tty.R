@@ -52,7 +52,10 @@ format_status_line_ansi.check_process <- function(
 }
 
 #' @export
-report_sleep.reporter_ansi_tty <- function(reporter, design, sleep = 0.1) { # nolint
+report_sleep.reporter_ansi_tty <- function(
+    reporter,
+    design,
+    sleep = default_tty_tick_interval()) {
   Sys.sleep(sleep)
 }
 
@@ -116,6 +119,7 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
   }
 
   # for each not-yet finished task, report status
+  buffer <- ""
   for (idx in which(reporter$status < STATUS$done)) {
     # update reported status
     alias <- names(reporter$status)[[idx]]
@@ -129,7 +133,8 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
     process <- task_graph_task_process(design$graph, v_checks[[v_idx]])
 
     # report status line
-    cat(
+    buffer <- paste0(
+      buffer,
       ansi_move_line_rel(n_lines),
       ansi_line_erase(),
       " ", strrep(" ", n_char_titles - nchar(task_name)), task_name, " ",
@@ -139,6 +144,8 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
     )
   }
 
+  cat(buffer)
+
   is_inst <- vlapply(design$active_processes(), inherits, "install_package_process") # nolint
   inst_pkgs <- names(design$active_processes()[is_inst])
   if (length(inst_pkgs)) {
@@ -146,7 +153,6 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
   } else {
     inst_msg <- ""
   }
-
 
   n_finished <- sum(v$status[v$type == "check"] >= STATUS$done)
   cli::cli_progress_update(

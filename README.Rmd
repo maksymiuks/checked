@@ -1,7 +1,6 @@
 ---
 title: reversecheck
-output:
-  github_document:
+output: github_document
 always_allow_html: yes
 ---
 
@@ -13,7 +12,6 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "man/figures/README",
   out.width = "100%",
-  cache = TRUE,
   asciicast_theme = if (Sys.getenv("IN_PKGDOWN") == "true") {
     "pkgdown"
   } else {
@@ -21,13 +19,10 @@ knitr::opts_chunk$set(
   }
 )
 
-Sys.setenv(CLI_TICK_TIME = "100")
 asciicast::init_knitr_engine(
   startup = bquote({
     options(repos = .(getOption("repos")))
   }),
-  timeout = 300,
-  echo = FALSE,
   echo_input = FALSE
 )
 ```
@@ -43,7 +38,7 @@ asciicast::init_knitr_engine(
 
 # Reverse-dependency Checks
 
-```{sh echo = FALSE, results = "hide"}
+```{sh clone-dev-praise, echo = FALSE, results = "hide"}
 # praise chosen for having few direct and reverse dependencies
 rm -rf /tmp/praise
 git clone https://github.com/gaborcsardi/praise /tmp/praise
@@ -53,11 +48,12 @@ git clone https://github.com/gaborcsardi/praise /tmp/praise
 library(reversecheck)
 run("/home/dev/praise")
 ```
-```{asciicast cache = FALSE}
-#' timeout: 300
-#' idle_time_limit: 300
-
+```{asciicast ansi-tty-example, cache = FALSE}
+#| asciicast_knitr_output = "svg",
+#| asciicast_at = "all",
+#| asciicast_cursor = FALSE
+options(reversecheck.tty_tick_interval = 200)
 reversecheck::run("/tmp/praise")
-cat()  # needed for asciicast capture?
+cat()
 ```
 
