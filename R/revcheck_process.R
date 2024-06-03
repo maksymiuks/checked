@@ -13,13 +13,23 @@ RE_CHECK <- paste0(
   "(?=\n|$)"         # terminated by a new line (or end of string)
 )
 # nolint end, styler: on
-DEFAULT_R_CMD_CHECK_VARIABLES <- c(
+
+DEFAULT_R_CMD_CHECK_VARIABLES <- c( # nolint
   "_R_CHECK_FORCE_SUGGESTS_" = FALSE,
   "_R_CHECK_RD_XREFS_" = FALSE,
   "_R_CHECK_SYSTEM_CLOCK_" = FALSE
 )
-DEFAULT_BUILD_ARGS <- c("--no-build-vignettes", "--no-manual")
-DEFAULT_CHECK_ARGS <- c("--timings", "--ignore-vignettes", "--no-manual")
+
+DEFAULT_BUILD_ARGS <- c( # nolint
+  "--no-build-vignettes",
+  "--no-manual"
+)
+
+DEFAULT_CHECK_ARGS <- c( # nolint
+  "--timings",
+  "--ignore-vignettes",
+  "--no-manual"
+)
 
 #' @importFrom R6 R6Class
 #' @importFrom rcmdcheck rcmdcheck_process
@@ -51,7 +61,8 @@ check_process <- R6::R6Class(
       if (!self$is_alive()) callback()
     },
     finalize = function() {
-      rcmdcheck_to_json(self$parse_results(), file.path(private$check_dir, "result.json"))
+      path <- file.path(private$check_dir, "result.json")
+      rcmdcheck_to_json(self$parse_results(), path)
       if (is.function(f <- private$finalize_callback)) f(self)
       if ("finalize" %in% ls(super)) super$finalize()
     },
@@ -81,12 +92,17 @@ check_process <- R6::R6Class(
       if (private$throttle()) {
         return()
       }
+
       if (!self$is_alive()) {
         private$time_last_check_start <- NULL
         private$time_finish <- Sys.time()
       }
 
-      out <- paste0(private$parsed_partial_check_output, super$read_output())
+      out <- paste0(
+        private$parsed_partial_check_output,
+        paste(super$read_output_lines(), collapse = "\n")
+      )
+
       captures <- checks_capture(out)
       checks <- checks_simplify(captures)
 

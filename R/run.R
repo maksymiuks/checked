@@ -19,8 +19,10 @@ run.character <- function(design, ..., reporter = default_reporter()) {
 
 #' @export
 run.check_design <- function(design, ..., reporter = default_reporter()) {
-  on.exit(design$terminate(), add = TRUE)
-  on.exit(report_finalize(reporter, design), add = TRUE)
+  on.exit(add = TRUE, {
+    design$terminate()
+    report_finalize(reporter, design)
+  })
 
   report_initialize(reporter, design)
   while (design$step()) {

@@ -6,6 +6,7 @@
 \alias{dep_graph_which_root_satisfied}
 \alias{task_graph_which_satisfied_strong}
 \alias{task_graph_which_check_satisfied}
+\alias{task_graph_which_install_satisfied}
 \title{Find the Next Packages Not Dependent on an Unavailable Package}
 \usage{
 dep_graph_which_satisfied(
@@ -25,6 +26,13 @@ task_graph_which_check_satisfied(
   g,
   ...,
   dependencies = "all",
+  status = STATUS$pending
+)
+
+task_graph_which_install_satisfied(
+  g,
+  ...,
+  dependencies = "strong",
   status = STATUS$pending
 )
 }
@@ -47,5 +55,7 @@ already has its dependencies done.
 \item \code{task_graph_which_satisfied_strong()}: List vertices whose strong dependencies are satisfied
 
 \item \code{task_graph_which_check_satisfied()}: List root vertices whose dependencies are all satisfied
+
+\item \code{task_graph_which_install_satisfied()}: List root vertices whose dependencies are all satisfied
 
 }}

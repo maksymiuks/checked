@@ -5,7 +5,6 @@
 #' arbitrary state during reporting.
 #'
 #' @noRd
-#' @keywords internal
 reporter <- function(type) {
   type <- paste0("reporter_", type)
   structure(new.env(parent = baseenv()), class = c(type, "reporter"))
@@ -20,6 +19,21 @@ default_reporter <- function() {
   } else {
     reporter("basic_tty")
   }
+}
+
+#' @export
+reporter_ansi_tty <- function() {
+  reporter("ansi_tty")
+}
+
+#' @export
+reporter_dynamic_tty <- function() {
+  reporter("dynamic_tty")
+}
+
+#' @export
+reporter_basic_tty <- function() {
+  reporter("basic_tty")
 }
 
 #' Provide a default sleep period between updates

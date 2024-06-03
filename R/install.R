@@ -14,11 +14,18 @@ install_packages_process <- R6::R6Class(
         stderr = "2>&1"
       )
     },
+    get_duration = function() {
+      if (!self$is_alive() && is.null(private$time_finish)) {
+        private$time_finish <- Sys.time()
+      }
+      (private$time_finish %||% Sys.time()) - self$get_start_time()
+    },
     set_finalizer = function(callback) {
       private$finalize_callback <- callback
       if (!self$is_alive()) callback()
     },
     finalize = function() {
+      private$time_finish <- Sys.time()
       if (is.function(f <- private$finalize_callback)) f(self)
       if ("finalize" %in% ls(super)) super$finalize()
     }
@@ -27,6 +34,7 @@ install_packages_process <- R6::R6Class(
     options = NULL,
     package = NULL,
     finalize_callback = NULL,
+    time_finish = NULL,
     callr_r_bg = function(...) {
       # default formal argument values
       options <- formals(callr::r_bg)
