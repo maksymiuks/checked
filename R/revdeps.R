@@ -1,9 +1,10 @@
 rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
+  ap <- available.packages(repos = repos)
   path <- check_path_is_pkg_source(path)
   package <- get_package_name(path)
-  package_v <- available.packages(repos = repos)[package, "Version"]
+  package_v <- ap[package, "Version"]
   revdeps <- tools::package_dependencies(package, reverse = TRUE)[[1]]
-  version <- available.packages()[revdeps, "Version"]
+  version <- ap[revdeps, "Version"]
   
   df_dev <- df_rel <- data.frame(
     alias = revdeps,
@@ -11,7 +12,7 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   )
   
   df_dev$alias <- paste0(df_dev$alias, " (dev)")
-  df_dev$package <- rev_dep_check_tasks_specs(revdeps, repos, df_dev$alias, "new")
+  df_dev$package <- rev_dep_check_tasks_specs(revdeps, repos, df_dev$alias, "new", db = ap)
   df_dev$custom <- rep(list(custom_install_task_spec(
     alias = paste0(package, " (dev)"),
     name = package,
@@ -20,14 +21,14 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
   )), times = NROW(df_dev))
   
   df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
-  df_rel$package <- rev_dep_check_tasks_specs(revdeps, repos, df_rel$alias, "old")
+  df_rel$package <- rev_dep_check_tasks_specs(revdeps, repos, df_rel$alias, "old", db = ap)
   df_rel$custom <- rep(list(custom_install_task_spec()), times = NROW(df_dev))
 
   idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
   rbind(df_dev, df_rel)[idx, ]
 }
 
-rev_dep_check_tasks_specs <- function(packages, repos, aliases = packages, revdep) {
+rev_dep_check_tasks_specs <- function(packages, repos, aliases = packages, revdep, db = available.packages(repos = repos)) {
   db <- available.packages(repos = repos)
   mapply(function(p, a) {
     revdep_check_task_spec(

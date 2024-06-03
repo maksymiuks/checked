@@ -38,6 +38,7 @@ start_task <- function(task, g, ...) {
   UseMethod("start_task", task_graph_task_spec(g, task))
 }
 
+#' @export
 start_task.install_task_spec <- function(task, g, output, lib.loc, ...) {
   spec <- task_graph_task_spec(g, task)
   package <- if (is.null(spec$path)) spec$name else spec$path
@@ -54,6 +55,7 @@ start_task.install_task_spec <- function(task, g, output, lib.loc, ...) {
   )
 }
 
+#' @export
 start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
   spec <- task_graph_task_spec(g, task)
   package <- if (is.null(spec$path)) spec$name else spec$path
@@ -70,6 +72,7 @@ start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
   )
 }
 
+#' @export
 start_task.check_task_spec <- function(task, g, output, lib.loc, ...) {
   spec <- task_graph_task_spec(g, task)
   libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)

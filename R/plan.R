@@ -35,7 +35,7 @@ check_design <- R6::R6Class(
       private$repos <- repos
       
       g <- task_graph_create(df, repos)
-      self$graph <- task_graph_update_done(g, lib.loc)
+      self$graph <- task_graph_update_done(g, c(path_lib(output), lib.loc))
       
     },
 

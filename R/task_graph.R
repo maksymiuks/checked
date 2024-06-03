@@ -10,14 +10,16 @@ task_graph_create <- function(df, repos = getOption("repos"), ...) {
   
   g <- igraph::graph_from_data_frame(edges, vertices = vertices)
   igraph::V(g)$status <- STATUS$pending
-  g <- task_graph_sort(g)
-  g
+  task_graph_sort(g)
 }
 
 task_edges_df <- function(df, repos) {
   pkgs <- vcapply(df$package, `[[`, "name")
   db <- available.packages(repos = repos)[, c("Package", uulist(DEP))]
   
+  # For checks aliast has to have different name than package name
+  # Use repos = NULL to derive whether dependecies should be taken from release version
+  # of the package or from the source
   # Add custom packages to db
   custom_aliases_idx <- which(vlapply(df$custom, function(x) !is.null(x$name)))
   custom_aliases <- vcapply(df$custom[custom_aliases_idx], `[[`, "alias")
