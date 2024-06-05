@@ -17,11 +17,6 @@ results.check_design <- function(x, ...) {
   })
   
   structure(
-    lapply(res, results, output = x$output),
-    names = classes,
-    class = "reversecheck_results"
-  )
-  structure(
     lapply(res, function(y, output) {
       structure(
         results(y, output),
@@ -35,7 +30,7 @@ results.check_design <- function(x, ...) {
 
 #' @export
 results.list_revdep_check_task_spec <- function(x, output, ...) {
-  name <- vcapply(x, `[[`, "name")
+  name <- vcapply(x, function(y) y$package_spec$name)
   revdep <- vcapply(x, `[[`, "revdep")
   
   new <- lapply(sort(unique(name)), function(y) {
@@ -69,7 +64,12 @@ results.revdep_check_task_spec <- function(x, y, output, ...) {
       )
       
       matching_headers_idx <- names(new_i) %in% names(old_i)
-      matching_messages_idx <- new_i %in% old_i
+      # Create temporary object with "See <path> for details" path
+      # stripped out as it will always emit potential issues due to the path 
+      # differences
+      new_i_tmp <- gsub("See(.*?)for details", "See <path> for details", new_i)
+      old_i_tmp <- gsub("See(.*?)for details", "See <path> for details", old_i)
+      matching_messages_idx <- new_i_tmp %in% old_i_tmp
       
       new_issues <- structure(
         unname(new_i[!matching_headers_idx]),
@@ -87,18 +87,39 @@ results.revdep_check_task_spec <- function(x, y, output, ...) {
       list("issues" = new_issues, "potential_issues" = new_potential_issues)
     }),
     names = ISSUES_TYPES,
+    package = new$package,
     class = "rcmdcheck_diff"
   )
 }
 
 #' @export
 results.list_check_task_spec <- function(x, output, ...) {
-  
+  alias <- vcapply(x, `[[`, "alias")
+  structure(
+    lapply(x, results, output = output),
+    names = alias
+  )
 }
 
 #' @export
 results.check_task_spec <- function(x, output, ...) {
+  x <- rcmdcheck_from_json(file.path(path_check_output(output, x$alias), "result.json"))
   
+  structure(
+    lapply(ISSUES_TYPES, function(i) {
+      x_i <- x[[i]]
+      
+      new_issues <- structure(
+        unname(x_i),
+        class = "issues"
+      )
+      
+      list("issues" = new_issues)
+    }),
+    names = ISSUES_TYPES,
+    package = x$package,
+    class = "rcmdcheck_diff"
+  )
 }
 
 #' @export
@@ -121,10 +142,40 @@ summary.results_check_task_spec <- function(object, ...) {
   )
 }
 
+#' @export
+print.reversecheck_results <- function(x, ...) {
+  for (i in seq_along(x)) {
+    cat("#", tools::toTitleCase(strsplit(names(x)[i], "_")[[1]]), "\n\n")
+    print(x[[i]])
+    cat("\n")
+  }
+  invisible(x)
+}
+
+#' @export
+print.results_check_task_spec <- function(x, ...) {
+  for (i in seq_along(x)) {
+    print(x[[i]])
+    cat("\n")
+  }
+  invisible(x)
+}
+
+#' @export
+print.results_revdep_check_task_spec <- function(x, ...) {
+  print.results_check_task_spec(x, ...)
+}
+
+get_issue_header <- function(x) {
+  unname(vapply(x, function(y) {
+    strsplit(y, "...", fixed = TRUE)[[1]][1]
+  }, FUN.VALUE = character(1)))
+}
+
 
 rcmdcheck_to_json <- function(rcheck, file = NULL) {
-  checkmate::assert_class(rcheck, "rcmdcheck")
-  
+  stopifnot(inherits(rcheck, "rcmdcheck"))
+
   json <- jsonlite::toJSON(
     unclass(rcheck),
     auto_unbox = TRUE,
@@ -141,7 +192,8 @@ rcmdcheck_to_json <- function(rcheck, file = NULL) {
 
 
 rcmdcheck_from_json <- function(file) {
-  checkmate::assert_file_exists(file, access = "r")
+  stopifnot(file.exists(file))
+  
   parsed <- jsonlite::fromJSON(file)
   structure(
     if (is.character(parsed)) jsonlite::fromJSON(parsed) else parsed,
@@ -170,27 +222,29 @@ count.potential_issues <- function(d, type) {
 
 #' @export
 print.rcmdcheck_diff <- function(x, ...) {
-  cat("R CMD check diff \n")
+  cat(sprintf("%s package R CMD check diff \n", attr(x, "package")))
   for (i in ISSUES_TYPES) {
     status <- if (length(x[[i]]$issues) > 0) {
-      "NEW ISSUES"
+      sprintf("NEW ISSUES [%s]", length(x[[i]]$issues))
     } else if (length(x[[i]]$potential_issues$new) > 0) {
-      "NEW POTENTIAL ISSUES"
+      sprintf("NEW POTENTIAL ISSUES [%s]", length(x[[i]]$potential_issues$new))
     } else {
       "OK"
     }
     
     cat(sprintf("%s: %s", i, status), "\n")
     if (status != "OK") {
-      print(x[[i]]$issues)
-      print(x[[i]]$potential_issues)
+      if (!is.null(x[[i]]$issues)) print(x[[i]]$issues)
+      if (!is.null(x[[i]]$potential_issues)) print(x[[i]]$potential_issues)
+      cat("\n")
     }
   }
+  invisible(x)
 }
 
 #' @export
 print.issues <- function(x, ...) {
-  cat(x, sep = "\n")
+  cat(x, sep = "\n\n")
   invisible(x)
 }
 
@@ -205,10 +259,3 @@ print.potential_issues <- function(x, ...) {
   }
   invisible(x)
 }
-
-get_issue_header <- function(x) {
-  unname(vapply(x, function(y) {
-    strsplit(y, "...", fixed = TRUE)[[1]][1]
-  }, FUN.VALUE = character(1)))
-}
-

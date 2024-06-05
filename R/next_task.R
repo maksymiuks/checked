@@ -1,7 +1,7 @@
 next_task_to_run <- function(g, output) {
   checks <- task_graph_which_check_satisfied(g)
   installs <- task_graph_which_install_satisfied(g)
-  
+
   # Prioritize checks overs installs
   v <- igraph::V(g)[c(checks, installs)]
   head(v, 1L)
@@ -15,11 +15,11 @@ task_get_lib_loc <- function(g, node, output) {
   # always terminal. Therefore if we sort nhood making custom packages appear
   # first, their lib will always be prioritized
   attributes <- igraph::vertex.attributes(g, index = nhood)
-  
+
   paths <- vcapply(nhood, function(v) {
     task_get_install_lib(g, v, output)
   })
-  
+
   unique(paths[order(attributes$custom, decreasing = TRUE)])
 }
 
@@ -41,13 +41,13 @@ start_task <- function(task, g, ...) {
 #' @export
 start_task.install_task_spec <- function(task, g, output, lib.loc, ...) {
   spec <- task_graph_task_spec(g, task)
-  package <- if (is.null(spec$path)) spec$name else spec$path
+  install_parameters <- install_parameters(spec$package_spec)
   libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
   install_packages_process$new(
-    package,
+    install_parameters$package,
     lib = path_lib(output),
     libpaths = libpaths,
-    repos = spec$repos,
+    repos = install_parameters$repos,
     type = spec$type,
     INSTALL_opts = spec$INSTALL_opts,
     log = path_package_install_log(output, spec$alias),
@@ -57,14 +57,15 @@ start_task.install_task_spec <- function(task, g, output, lib.loc, ...) {
 
 #' @export
 start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
+  browser()
   spec <- task_graph_task_spec(g, task)
-  package <- if (is.null(spec$path)) spec$name else spec$path
+  install_parameters <- install_parameters(spec$package_spec)
   libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
   install_packages_process$new(
-    package,
+    install_parameters$package,
     lib = path_custom_lib(output, spec$alias),
     libpaths = libpaths,
-    repos = spec$repos,
+    repos = install_parameters$repos,
     type = spec$type,
     INSTALL_opts = spec$INSTALL_opts,
     log = path_package_install_log(output, spec$alias),
@@ -76,17 +77,13 @@ start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
 start_task.check_task_spec <- function(task, g, output, lib.loc, ...) {
   spec <- task_graph_task_spec(g, task)
   libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
-  path <- if (!file.exists(spec$path)) {
-    fetch_package_source(spec$path, path_sources(output))
-  } else {
-    spec$path
-  }
-  
+  path <- check_path(spec$package_spec, output = path_sources(output))
+
   check_process$new(
     path = path,
     check_dir = path_check_output(output, spec$alias),
     libpath = libpaths,
-    repos = spec$repos,
+    repos = spec$package_spec$repos,
     args = spec$check_args,
     build_args = spec$build_args,
     env = spec$env

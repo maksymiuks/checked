@@ -1,14 +1,31 @@
-task_spec <- function(name = NULL, alias = name, path = NULL, repos = NULL, env = NULL) {
+task_spec <- function(alias = NULL, package_spec = NULL, env = NULL) {
   structure(
     list(
-      name = name,
       alias = alias,
-      path = path,
-      repos = repos,
+      package_spec = package_spec,
       env = env
     ),
     class = "task_spec"
   )
+}
+
+list_of_task_spec <- function(x, ...) {
+  structure(x, class = c("list_of_task_spec", "list"))
+}
+
+#' @export
+print.task_spec <- function(x, ...) {
+  cat(format(x, ...), "\n")
+}
+
+#' @export
+format.task_spec <- function(x, ...) {
+  paste0("<task ", x$alias, ">")
+}
+
+#' @export
+format.list_of_task_spec <- function(x, ...) {
+  vcapply(x, format)
 }
 
 install_task_spec <- function(type = getOption("pkgType"), INSTALL_opts = NULL, ...) {
@@ -47,6 +64,6 @@ revdep_check_task_spec <- function(revdep, ...) {
   task_spec <- check_task_spec(...)
   task_spec["revdep"] <- list(revdep)
   class(task_spec) <- c("revdep_check_task_spec", class(task_spec))
-  
+
   task_spec
 }
