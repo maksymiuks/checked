@@ -2,15 +2,15 @@
 % Please edit documentation in R/task_graph.R
 \name{task_graph_neighborhoods}
 \alias{task_graph_neighborhoods}
-\title{Find Dependency Neighborhood}
+\title{Find Task Neighborhood}
 \usage{
 task_graph_neighborhoods(g, nodes)
 }
 \arguments{
-\item{g}{A dependency graph, as produced with \code{\link[=dep_graph_create]{dep_graph_create()}}}
+\item{g}{A task graph, as produced with \code{\link[=dep_graph_create]{dep_graph_create()}}}
 
 \item{names}{Names of packages whose neighborhoods should be calculcated.}
 }
 \description{
-Find Dependency Neighborhood
+Find Task Neighborhood
 }
