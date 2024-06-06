@@ -57,7 +57,6 @@ start_task.install_task_spec <- function(task, g, output, lib.loc, ...) {
 
 #' @export
 start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
-  browser()
   spec <- task_graph_task_spec(g, task)
   install_parameters <- install_parameters(spec$package_spec)
   libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)

@@ -39,7 +39,9 @@ check_design <- R6::R6Class(
         output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
         lib.loc = .libPaths(),
         repos = getOption("repos"),
+        restore = TRUE
         ...) { # styler: on
+      if (!restore) unlink(output, recursive = TRUE, force = TRUE)
       self$input <- df
       self$output <- output
       private$n <- n
@@ -48,6 +50,7 @@ check_design <- R6::R6Class(
 
       g <- task_graph_create(df, repos)
       self$graph <- task_graph_update_done(g, c(path_lib(output), lib.loc))
+      self$restore_complete_checks()
     },
 
     #' Get Active Processes
@@ -121,6 +124,13 @@ check_design <- R6::R6Class(
     },
     is_done = function() {
       all(igraph::vertex.attributes(self$graph)$status == STATUS$done)
+    },
+    restore_complete_checks = function() {
+      checks <- self$input$alias
+      check_done <- vlapply(checks, function(check) {
+        file.exists(file.path(path_check_output(self$output, check), "result.json"))
+      })
+      self$graph <- task_graph_set_package_status(self$graph, checks[check_done], STATUS$done)
     }
   ),
   private = list(
