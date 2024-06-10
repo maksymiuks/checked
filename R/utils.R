@@ -74,7 +74,7 @@ raw_based_hash <- function(x) {
 check_path_is_pkg_source <- function(pkg) {
   stopifnot(
     is.character(pkg),
-    length(pkg) != 1,
+    length(pkg) == 1,
     dir.exists(pkg),
     file.exists(file.path(pkg, "DESCRIPTION"))
   )

@@ -67,8 +67,8 @@ results.revdep_check_task_spec <- function(x, y, output, ...) {
       # Create temporary object with "See <path> for details" path
       # stripped out as it will always emit potential issues due to the path 
       # differences
-      new_i_tmp <- gsub("See(.*?)for details", "See <path> for details", new_i)
-      old_i_tmp <- gsub("See(.*?)for details", "See <path> for details", old_i)
+      new_i_tmp <- strip_details_from_issue(new_i)
+      old_i_tmp <- strip_details_from_issue(old_i)
       matching_messages_idx <- new_i_tmp %in% old_i_tmp
       
       new_issues <- structure(
@@ -258,4 +258,8 @@ print.potential_issues <- function(x, ...) {
     cat("\n")
   }
   invisible(x)
+}
+
+strip_details_from_issue <- function(x) {
+  gsub("See(.*?)for details", "See <path> for details", x)
 }

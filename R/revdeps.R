@@ -35,7 +35,7 @@ rev_dep_check_tasks_specs <- function(packages, repos, aliases, revdep) {
     function(p, a) {
       revdep_check_task_spec(
         alias = a,
-        package = package_spec(name = p, path = NULL, repos = repos),
+        package = package_spec(name = p, repos = repos),
         env = DEFAULT_R_CMD_CHECK_VARIABLES,
         check_args = DEFAULT_CHECK_ARGS,
         build_args = DEFAULT_BUILD_ARGS,

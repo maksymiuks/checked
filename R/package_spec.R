@@ -1,23 +1,22 @@
-package_spec <- function(name = NULL, path = NULL, repos = NULL) {
+package_spec <- function(name = NULL, repos = NULL) {
   structure(
     list(
       name = name,
-      path = path,
       repos = repos
     ),
     class = "package_spec"
   )
 }
 
-package_spec_source <- function(...) {
+package_spec_source <- function(path = NULL, ...) {
   package_spec <- package_spec(...)
-  
+  package_spec["path"] <- list(path)
   class(package_spec) <- c("package_spec_source", class(package_spec))
   package_spec
 }
 
-package_spec_archive_source <- function(...) {
-  package_spec <- package_spec(...)
+package_spec_archive_source <- function(path = NULL, ...) {
+  package_spec <- package_spec_source(path, ...)
   
   class(package_spec) <- c("package_spec_archive_source", class(package_spec))
   package_spec

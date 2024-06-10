@@ -39,7 +39,7 @@ check_design <- R6::R6Class(
         output = tempfile(paste(packageName(), Sys.Date(), sep = "-")),
         lib.loc = .libPaths(),
         repos = getOption("repos"),
-        restore = TRUE
+        restore = TRUE,
         ...) { # styler: on
       if (!restore) unlink(output, recursive = TRUE, force = TRUE)
       self$input <- df
@@ -115,7 +115,7 @@ check_design <- R6::R6Class(
       name <- task_graph_task_name(self$graph, task)
       task_graph_package_status(self$graph, task) <- STATUS$`in progress`
       x$set_finalizer(function(process) {
-        # Implement warning if the process failed before finalizing
+        # TODO: Implement warning if the process failed before finalizing
         self$pop_process(name)
         task_graph_package_status(self$graph, task) <- STATUS$done
       })
