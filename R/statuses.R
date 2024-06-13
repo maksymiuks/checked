@@ -1,4 +1,3 @@
-#' @export
 get_process_status <- function(x) {
   UseMethod("get_process_status")
 }

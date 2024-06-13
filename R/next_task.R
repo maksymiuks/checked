@@ -1,12 +1,13 @@
-next_task_to_run <- function(g, output) {
+next_task_to_run <- function(g) {
   checks <- task_graph_which_check_satisfied(g)
   installs <- task_graph_which_install_satisfied(g)
 
   # Prioritize checks overs installs
   v <- igraph::V(g)[c(checks, installs)]
-  head(v, 1L)
+  utils::head(v, 1L)
 }
 
+#' @importFrom igraph .env
 task_get_lib_loc <- function(g, node, output) {
   nhood <- task_graph_neighborhoods(g, node)[[1]]
   name <- names(node) %||% node
@@ -83,7 +84,7 @@ start_task.check_task_spec <- function(task, g, output, lib.loc, ...) {
     check_dir = path_check_output(output, spec$alias),
     libpath = libpaths,
     repos = spec$package_spec$repos,
-    args = spec$check_args,
+    args = spec$args,
     build_args = spec$build_args,
     env = spec$env
   )

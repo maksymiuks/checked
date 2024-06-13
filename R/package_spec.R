@@ -1,3 +1,16 @@
+#' Package specification
+#' 
+#' Create package specification list which consists of all the details required
+#' to identify and acquire source of the package.
+#' 
+#' @param name name of the package.
+#' @param repos repository where package with given name should identified.
+#' @param path path to the source of the package (either bundled or not). URLs
+#' are acceptable.
+#' @param ... parameters passed to downstream constructors
+#' 
+#' @export
+#' @rdname package_spec
 package_spec <- function(name = NULL, repos = NULL) {
   structure(
     list(
@@ -8,6 +21,8 @@ package_spec <- function(name = NULL, repos = NULL) {
   )
 }
 
+#' @export
+#' @rdname package_spec
 package_spec_source <- function(path = NULL, ...) {
   package_spec <- package_spec(...)
   package_spec["path"] <- list(path)
@@ -15,6 +30,8 @@ package_spec_source <- function(path = NULL, ...) {
   package_spec
 }
 
+#' @export
+#' @rdname package_spec
 package_spec_archive_source <- function(path = NULL, ...) {
   package_spec <- package_spec_source(path, ...)
   
@@ -33,7 +50,7 @@ get_package_spec_dependencies.default <- function(package_spec) {
 
 #' @export
 get_package_spec_dependencies.package_spec <- function(package_spec) {
-  db <- available.packages(repos = package_spec$repos)
+  db <- utils::available.packages(repos = package_spec$repos)
   row <- db[package_spec$name, , drop = FALSE]
   row[, DB_COLNAMES, drop = FALSE]
 }
@@ -54,7 +71,7 @@ get_package_spec_dependencies.package_spec_archive_source <- function(package_sp
   } else {
     package_spec$path
   }
-  untar(path, exdir = dir)
+  utils::untar(path, exdir = dir)
   package_spec$path <- file.path(path, package_spec$name)
   get_package_spec_dependencies.package_spec_source(package_spec)
 }

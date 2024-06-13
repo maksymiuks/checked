@@ -44,16 +44,20 @@ DB_COLNAMES <- c(
 )
 
 base_pkgs <- function() {
-  ip <- installed.packages()
+  ip <- utils::installed.packages()
   c("R", ip[!is.na(ip[, "Priority"]) & ip[, "Priority"] == "base", "Package"])
 }
+
+.tools <- as.list(getNamespace("tools"), all.names = TRUE)[c(
+  ".split_dependencies"
+)]
 
 split_packages_names <- function(x) {
   if (is.na(x)) {
     x
   } else {
     vcapply(
-      tools:::.split_dependencies(x),
+      .tools$.split_dependencies(x),
       "[[",
       "name",
       USE.NAMES = FALSE

@@ -1,5 +1,4 @@
-#' @export
-format_status_line_ansi <- function(x, ...) {
+format_status_line_ansi <- function(process, ...) {
   UseMethod("format_status_line_ansi")
 }
 
@@ -29,7 +28,7 @@ format_status_line_ansi.check_process <- function(
     status <- process$spin()
   } else if (process$is_alive()) {
     # processing checks
-    msg <- paste("checking", names(tail(checks, 1)), "...")
+    msg <- paste("checking", names(utils::tail(checks, 1)), "...")
     status <- process$spin()
     process_time <- cli::col_cyan(process_time)
   } else {

@@ -4,7 +4,17 @@ empty_edge <- data.frame(
   type = character(0)
 )
 
-task_graph_create <- function(df, repos = getOption("repos"), ...) {
+#' Create Task Graph
+#'
+#' @param df data.frame listing
+#' @param repos repositories which will be used to identify dependencies chain
+#' to run R CMD checks
+#' @return A dependency graph with vertex attributes "root" (a logical value
+#'   indicating whether the package as one of the roots used to create the
+#'   graph), "status" (installation status) and "order" (installation order).
+#'
+#' @importFrom igraph V
+task_graph_create <- function(df, repos = getOption("repos")) {
   edges <- task_edges_df(df, repos)
   vertices <- task_vertices_df(df, edges, repos)
 
@@ -15,7 +25,7 @@ task_graph_create <- function(df, repos = getOption("repos"), ...) {
 }
 
 task_edges_df <- function(df, repos) {
-  db <- available.packages(repos = repos)[, DB_COLNAMES]
+  db <- utils::available.packages(repos = repos)[, DB_COLNAMES]
   
   # For checks alias has to have different name than package name
   # Use repos = NULL to derive whether dependencies should be taken from release version
@@ -109,7 +119,7 @@ task_vertices_df <- function(df, edges, repos) {
     if (v %in% df$alias) {
       df$package[[which(df$alias == v)]]
     } else if (v %in% custom_pkgs_aliases) {
-      df$custom[[head(which(as.character(lapply(df$custom, `[[`, "alias")) == v), 1)]]
+      df$custom[[utils::head(which(as.character(lapply(df$custom, `[[`, "alias")) == v), 1)]]
     } else {
       install_task_spec(
         alias = v,
@@ -130,10 +140,11 @@ task_vertices_df <- function(df, edges, repos) {
 
 #' Find Task Neighborhood
 #'
-#' @param g A task graph, as produced with [dep_graph_create()]
-#' @param names Names of packages whose neighborhoods should be calculcated.
+#' @param g A task graph, as produced with [task_graph_create()]
+#' @param nodes Names or nodes objects of packages whose neighborhoods 
+#' should be calculated.
 #'
-#' @importFrom igraph neighboorhood V
+#' @importFrom igraph neighborhood
 task_graph_neighborhoods <- function(g, nodes) {
   igraph::neighborhood(
     g,
@@ -158,7 +169,7 @@ task_graph_neighborhoods <- function(g, nodes) {
 #' @return The [igraph::graph] `g`, with vertices sorted in preferred
 #'   installation order.
 #'
-#' @importFrom igraph vertex_attr neighborhood subgraph.edges permute topo_sort E V
+#' @importFrom igraph vertex_attr neighborhood subgraph.edges permute topo_sort E V E<- V<-
 task_graph_sort <- function(g) {
   roots <- which(igraph::vertex_attr(g, "type") == "check")
 
@@ -193,9 +204,27 @@ task_graph_sort <- function(g) {
 #' While other packages are in progress, ensure that the next selected package
 #' already has its dependencies done.
 #'
-#' @param g A dependency graph, as produced with [dep_graph_create()]
+#' @param g A dependency graph, as produced with [task_graph_create()].
+#' @param v Names or nodes objects of packages whose satisfiability should be
+#' checked.
+#' @param dependencies Which dependencies types should be met for a node to be
+#' considered satisfied.
+#' @param status status name. Nodes in v fill be filtered to consists only nodes
+#' with that status.
+#' @param ... parametrs passed to down-stream functions.
+#' 
+#' @details
+#' There are helpers defined for particular use cases that strictly rely on the 
+#' \code{task_graph_which_satisfied}, they are: 
+#' 
+#' \code{task_graph_which_satisfied_strong} - List vertices whose strong dependencies are satisfied.
+#' 
+#' \code{task_graph_which_check_satisfied} - List root vertices whose all dependencies are satisfied.
+#' 
+#' \code{task_graph_which_install_satisfied} - List install vertices whose dependencies are all satisfied
+#' 
 #' @return The name of the next package to prioritize
-#'
+#' @rdname dep_graph_which_satisfied
 #' @importFrom igraph incident_edges tail_of
 task_graph_which_satisfied <- function(
     g,
@@ -218,14 +247,12 @@ task_graph_which_satisfied <- function(
   names(deps_met[deps_met])
 }
 
-#' @describeIn dep_graph_which_satisfied
-#' List vertices whose strong dependencies are satisfied
+#' @rdname dep_graph_which_satisfied
 task_graph_which_satisfied_strong <- function(..., dependencies = "strong") { # nolint
   task_graph_which_satisfied(..., dependencies = dependencies)
 }
 
-#' @describeIn dep_graph_which_satisfied
-#' List root vertices whose dependencies are all satisfied
+#' @rdname dep_graph_which_satisfied
 task_graph_which_check_satisfied <- function(
     g,
     ...,
@@ -240,8 +267,7 @@ task_graph_which_check_satisfied <- function(
   )
 }
 
-#' @describeIn dep_graph_which_satisfied
-#' List root vertices whose dependencies are all satisfied
+#' @rdname dep_graph_which_satisfied
 task_graph_which_install_satisfied <- function(
     g,
     ...,

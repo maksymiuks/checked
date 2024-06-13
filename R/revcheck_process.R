@@ -51,7 +51,7 @@ check_process <- R6::R6Class(
       private$throttle <- throttle()
       private$spinners <- list(
         check = silent_spinner("circleHalves"),
-        starting = silent_spinner(list(frames = c("⠴", "⠦", "⠖", "⠲")))
+        starting = silent_spinner(list(frames = c("\u2834", "\u2826", "\u2816", "\u2832")))
       )
 
       super$initialize(...)
@@ -147,13 +147,14 @@ check_process <- R6::R6Class(
 #'   passed (TRUE if the interval has not yet passed).
 #'
 #' @examples
-#' my_throttle <- throttle(0.5)
+#' # TODO: Internal (non-exported) functions cannot be used in examples
+#' # my_throttle <- throttle(0.5)
 #'
-#' Sys.sleep(0.1)
-#' my_throttle()
+#' # Sys.sleep(0.1)
+#' # my_throttle()
 #'
-#' Sys.sleep(0.5)
-#' my_throttle()
+#' # Sys.sleep(0.5)
+#' # my_throttle()
 #'
 throttle <- function(interval = 0.2) {
   e <- environment()
@@ -188,6 +189,7 @@ throttle <- function(interval = 0.2) {
 #'
 #' checks_capture(check_output)
 #'
+#' @export
 checks_capture <- function(x) {
   m <- gregexec(RE_CHECK, x, perl = TRUE)[[1]]
 

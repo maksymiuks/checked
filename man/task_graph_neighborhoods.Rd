@@ -7,9 +7,10 @@
 task_graph_neighborhoods(g, nodes)
 }
 \arguments{
-\item{g}{A task graph, as produced with \code{\link[=dep_graph_create]{dep_graph_create()}}}
+\item{g}{A task graph, as produced with \code{\link[=task_graph_create]{task_graph_create()}}}
 
-\item{names}{Names of packages whose neighborhoods should be calculcated.}
+\item{nodes}{Names or nodes objects of packages whose neighborhoods
+should be calculated.}
 }
 \description{
 Find Task Neighborhood

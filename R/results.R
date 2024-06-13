@@ -20,7 +20,7 @@ results.check_design <- function(x, ...) {
     lapply(res, function(y, output) {
       structure(
         results(y, output),
-        class = paste0("results_", head(class(y[[1]]), 1L))
+        class = paste0("results_", utils::head(class(y[[1]]), 1L))
       )
     }, output = x$output),
     names = classes,

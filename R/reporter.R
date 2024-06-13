@@ -21,40 +21,36 @@ default_reporter <- function() {
   }
 }
 
-#' @export
 reporter_ansi_tty <- function() {
   reporter("ansi_tty")
 }
 
-#' @export
 reporter_dynamic_tty <- function() {
   reporter("dynamic_tty")
 }
 
-#' @export
 reporter_basic_tty <- function() {
   reporter("basic_tty")
 }
 
-#' Provide a default sleep period between updates
-report_sleep <- function(reporter, plan, sleep) {
+# Provide a default sleep period between updates
+report_sleep <- function(reporter, design, sleep) {
   UseMethod("report_sleep")
 }
 
 #' @export
-report_sleep.default <- function(reporter, plan, sleep = 1) {
+report_sleep.default <- function(reporter, design, sleep = 1) {
   Sys.sleep(sleep)
 }
 
-report_initialize <- function(reporter, plan, envir = parent.frame()) {
+report_initialize <- function(reporter, design, envir = parent.frame()) {
   UseMethod("report_initialize")
 }
 
-#' @export
-report_status <- function(reporter, plan, envir = parent.frame()) {
+report_status <- function(reporter, design, envir = parent.frame()) {
   UseMethod("report_status")
 }
 
-report_finalize <- function(reporter, plan, envir = parent.frame()) {
+report_finalize <- function(reporter, design) {
   UseMethod("report_finalize")
 }

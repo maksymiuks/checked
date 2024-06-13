@@ -8,13 +8,13 @@ cli_table_row <- function(
     "2" = ,
     "OK" = ,
     "3" = ,
-    "NONE" = cli::format_inline("{.success ✓}"),
+    "NONE" = cli::format_inline("{.success \u2713}"),
     "4" = ,
     "NOTE" = cli::format_inline("{.note !}"),
     "5" = ,
     "WARNING" = cli::format_inline("{.warn ?}"),
     "6" = ,
-    "ERROR" = cli::format_inline("{.err ⨯}"),
+    "ERROR" = cli::format_inline("{.err \u2a2f}"),
     if (title) cli::col_none(cli::style_bold(status)) else status
   )
 
@@ -35,7 +35,7 @@ cli_table_row <- function(
     errors <- cli::format_inline("{.err {errors}}")
   }
 
-  fmt <- "│ {status} │ {ok} {notes} {warnings} {errors} │ {msg}"
+  fmt <- "\u2502 {status} \u2502 {ok} {notes} {warnings} {errors} \u2502 {msg}"
   cli::format_inline(fmt)
 }
 
