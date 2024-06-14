@@ -34,30 +34,35 @@ DEP <- enum( # nolint
 
 DEP_STRONG <- unlist(DEP[1:3]) # nolint
 
+DB_COLNAMES <- c(
+  "Package",
+  "Depends",
+  "Imports",
+  "LinkingTo",
+  "Suggests",
+  "Enhances"
+)
+
 base_pkgs <- function() {
-  ip <- installed.packages()
+  ip <- utils::installed.packages()
   c("R", ip[!is.na(ip[, "Priority"]) & ip[, "Priority"] == "base", "Package"])
 }
+
+.tools <- as.list(getNamespace("tools"), all.names = TRUE)[c(
+  ".split_dependencies"
+)]
 
 split_packages_names <- function(x) {
   if (is.na(x)) {
     x
   } else {
     vcapply(
-      tools:::.split_dependencies(x),
+      .tools$.split_dependencies(x),
       "[[",
       "name",
       USE.NAMES = FALSE
     )
   }
-  # unname(
-  #   gsub(
-  #     "^\\s+|\\s+$", "",
-  #     unlist(
-  #       strsplit(gsub("\\s*\\(.*?\\)\\s*", "", x), ",\\s*")
-  #     )
-  #   )
-  # )
 }
 
 replace_with_map <- function(x, value, replacement) {
@@ -71,9 +76,12 @@ raw_based_hash <- function(x) {
 }
 
 check_path_is_pkg_source <- function(pkg) {
-  checkmate::assert_string(pkg)
-  checkmate::assert_directory_exists(pkg)
-  checkmate::assert_file_exists(file.path(pkg, "DESCRIPTION"))
+  stopifnot(
+    is.character(pkg),
+    length(pkg) == 1,
+    dir.exists(pkg),
+    file.exists(file.path(pkg, "DESCRIPTION"))
+  )
   normalizePath(pkg, mustWork = TRUE)
 }
 
@@ -101,13 +109,25 @@ check_dependencies <- function(dependencies) {
     )
   }
 
-  checkmate::assert_character(dependencies, min.len = 1)
+  stopifnot(
+    is.character(dependencies),
+    length(dependencies) >= 1
+  )
   dependencies
 }
+
 
 get_package_name <- function(path) {
   if (file.exists(file.path(path, "DESCRIPTION"))) {
     read.dcf(file.path(path, "DESCRIPTION"))[, "Package"]
+  } else {
+    path
+  }
+}
+
+get_package_version <- function(path) {
+  if (file.exists(file.path(path, "DESCRIPTION"))) {
+    read.dcf(file.path(path, "DESCRIPTION"))[, "Version"]
   } else {
     path
   }
@@ -136,6 +156,35 @@ is_package_done <- function(pkg, lib.loc) {
   path <- find.package(pkg, lib.loc = lib.loc, quiet = TRUE)
   length(path) > 0
 }
+
+get_package_source <- function(package, repos, db = NULL, destdir = NULL) {
+  if (is.null(db)) {
+    db <- utils::available.packages(repos = repos)
+  }
+  pkg <- db[package, ]
+  archive_url <- sprintf(
+    "%s/%s_%s.tar.gz",
+    pkg["Repository"],
+    pkg["Package"],
+    pkg["Version"]
+  )
+  
+  if (!is.null(destdir)) {
+    fetch_package_source(archive_url, destdir)
+  } else {
+    archive_url
+  }
+}
+
+fetch_package_source <- function(archive_url, destdir) {
+  bn <- basename(archive_url)
+  destfile <- file.path(destdir, bn)
+  if (!file.exists(destfile)) {
+    utils::download.file(archive_url, destfile = destfile, quiet = TRUE)
+  }
+  destfile
+}
+
 
 `%||%` <- function(x, y) {
   if (!is.null(x)) {

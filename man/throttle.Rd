@@ -19,12 +19,13 @@ passed (TRUE if the interval has not yet passed).
 Generate A Rate Limiting Throttle Function
 }
 \examples{
-my_throttle <- throttle(0.5)
+# TODO: Internal (non-exported) functions cannot be used in examples
+# my_throttle <- throttle(0.5)
 
-Sys.sleep(0.1)
-my_throttle()
+# Sys.sleep(0.1)
+# my_throttle()
 
-Sys.sleep(0.5)
-my_throttle()
+# Sys.sleep(0.5)
+# my_throttle()
 
 }

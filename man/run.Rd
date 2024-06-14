@@ -4,15 +4,13 @@
 \alias{run}
 \title{Run Reverse-Dependency Checks}
 \usage{
-run(design, ...)
+run(design, ..., reporter = default_reporter())
 }
 \arguments{
-\item{...}{Additional arguments unused}
-
-\item{A}{reverse-dependency plan, or an object coercible into a
+\item{design}{A reverse-dependency plan, or an object coercible into a
 plan.}
 
-\item{n}{The number of simultaneous child processes to use.}
+\item{...}{Additional arguments}
 
 \item{reporter}{A reporter to provide progress updates. Will default to the
 most expressive command-line reporter given your terminal capabilities.}
