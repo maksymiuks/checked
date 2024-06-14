@@ -22,19 +22,16 @@
     <loc>/reference/ansi.html</loc>
   </url>
   <url>
+    <loc>/reference/check_design.html</loc>
+  </url>
+  <url>
     <loc>/reference/checks_capture.html</loc>
   </url>
   <url>
+    <loc>/reference/checks_df.html</loc>
+  </url>
+  <url>
     <loc>/reference/checks_simplify.html</loc>
-  </url>
-  <url>
-    <loc>/reference/dep_graph_create.html</loc>
-  </url>
-  <url>
-    <loc>/reference/dep_graph_neighborhoods.html</loc>
-  </url>
-  <url>
-    <loc>/reference/dep_graph_sort.html</loc>
   </url>
   <url>
     <loc>/reference/dep_graph_which_satisfied.html</loc>
@@ -46,10 +43,7 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/report_sleep.html</loc>
-  </url>
-  <url>
-    <loc>/reference/revdeps_graph_create.html</loc>
+    <loc>/reference/package_spec.html</loc>
   </url>
   <url>
     <loc>/reference/reversecheck-package.html</loc>
@@ -61,10 +55,16 @@
     <loc>/reference/silent_spinner.html</loc>
   </url>
   <url>
+    <loc>/reference/task_graph_create.html</loc>
+  </url>
+  <url>
     <loc>/reference/task_graph_neighborhoods.html</loc>
   </url>
   <url>
-    <loc>/reference/task_graph_which_satisfied.html</loc>
+    <loc>/reference/task_graph_sort.html</loc>
+  </url>
+  <url>
+    <loc>/reference/task_spec.html</loc>
   </url>
   <url>
     <loc>/reference/throttle.html</loc>
