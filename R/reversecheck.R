@@ -1,4 +1,0 @@
-reversecheck <- function() {
-  
-  invisible(NULL)
-}
