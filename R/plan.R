@@ -78,12 +78,11 @@ check_design <- R6::R6Class(
         repos = getOption("repos"),
         restore = TRUE,
         ...) { # styler: on
-      
       # Make sure all aliases are unique
       stopifnot(
-        "Check task aliases has to be unique" = any(duplicated(df$alias)),
-        "Check task aliases cannot have the same name as any of the available packages" = any(df$alias %in% available.packages(repos = repos)[, "Package"]),
-        "Custom package aliases cannot be duplicates of check aliases" = any(uulist(drlapply(df$custom, `[[`, "alias")) %in% df$alias)
+        "Check task aliases has to be unique" = !any(duplicated(df$alias)),
+        "Check task aliases cannot have the same name as any of the available packages" = !any(df$alias %in% available.packages(repos = repos)[, "Package"]),
+        "Custom package aliases cannot be duplicates of check aliases" = !any(uulist(drlapply(df$custom, `[[`, "alias")) %in% df$alias)
       )
       message_possible_isolation_problems()
       
