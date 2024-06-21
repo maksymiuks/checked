@@ -1,10 +1,19 @@
 ISSUES_TYPES <- c("notes", "warnings", "errors")
 
+#' Check results
+#' 
+#' Get R CMD check results
+#' 
+#' @param x \code{\link[reversecheck]{check_design}} object.
+#' @param ... other parameters.
+#' 
+#' @export
 results <- function(x, ...) {
   UseMethod("results")
 }
 
 #' @export
+#' @rdname results
 results.check_design <- function(x, ...) {
   checks_nodes <- igraph::V(x$graph)[igraph::vertex.attributes(x$graph)$type == "check"]
   checks_classes <- vcapply(checks_nodes$spec, function(x) class(x)[[1]])
@@ -29,6 +38,7 @@ results.check_design <- function(x, ...) {
 }
 
 #' @export
+#' @noRd
 results.list_revdep_check_task_spec <- function(x, output, ...) {
   name <- vcapply(x, function(y) y$package_spec$name)
   revdep <- vcapply(x, `[[`, "revdep")
@@ -48,6 +58,7 @@ results.list_revdep_check_task_spec <- function(x, output, ...) {
 }
 
 #' @export
+#' @noRd
 results.revdep_check_task_spec <- function(x, y, output, ...) {
   new <- rcmdcheck_from_json(file.path(path_check_output(output, x$alias), "result.json"))
   old <- rcmdcheck_from_json(file.path(path_check_output(output, y$alias), "result.json"))
@@ -93,6 +104,7 @@ results.revdep_check_task_spec <- function(x, y, output, ...) {
 }
 
 #' @export
+#' @noRd
 results.list_check_task_spec <- function(x, output, ...) {
   alias <- vcapply(x, `[[`, "alias")
   structure(
@@ -102,6 +114,7 @@ results.list_check_task_spec <- function(x, output, ...) {
 }
 
 #' @export
+#' @noRd
 results.check_task_spec <- function(x, output, ...) {
   x <- rcmdcheck_from_json(file.path(path_check_output(output, x$alias), "result.json"))
   

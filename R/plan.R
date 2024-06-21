@@ -13,7 +13,6 @@ new_rev_dep_check_design <- function(x, ...) {
 #' Abstract object that drives all separate processes required to run 
 #' R CMD check sequence.
 #' 
-
 #' @examples
 #' # TODO: Make these tests agnostic (right now they are dependent on local file system)
 #' # I guess we can bundle some mock packages in tests directory that take a few
@@ -79,6 +78,14 @@ check_design <- R6::R6Class(
         repos = getOption("repos"),
         restore = TRUE,
         ...) { # styler: on
+      # Make sure all aliases are unique
+      stopifnot(
+        "Check task aliases has to be unique" = !any(duplicated(df$alias)),
+        "Check task aliases cannot have the same name as any of the available packages" = !any(df$alias %in% available.packages(repos = repos)[, "Package"]),
+        "Custom package aliases cannot be duplicates of check aliases" = !any(uulist(drlapply(df$custom, `[[`, "alias")) %in% df$alias)
+      )
+      message_possible_isolation_problems()
+      
       if (!restore) unlink(output, recursive = TRUE, force = TRUE)
       self$input <- df
       self$output <- output

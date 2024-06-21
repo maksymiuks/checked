@@ -6,7 +6,11 @@
 #' including dependencies installation.
 #' 
 #' @param path path to the package source. See Details.
-#' @param repos repository used to identify reverse dependecies.
+#' @param repos repository used to identify reverse dependencies.
+#' @param development_only logical whether reverse dependency check should be run
+#' only against development version of the package. Applicable mostly when checking
+#' whether adding new package would break tests of packages already in the
+#' repository and taking the package as suggests dependency. Default to FALSE.
 #' 
 #' @details
 #' 
@@ -14,7 +18,7 @@
 #' for running reverse dependency check for certain source package. In such case
 #' \code{path} parameter should point to the source of the development version of 
 #' the package and \code{repos} should be a repository for which reverse 
-#' dependecies should be identified.
+#' dependencies should be identified.
 #' 
 #' \code{source_check_tasks_df} generates checks schedule data.frame for all source
 #' packages specified by the \code{path}. Therefore it accepts it to be a vector
@@ -33,9 +37,12 @@
 #' should be installed before checking the package.
 #' }
 #' 
+#' @name checks_df
+NULL
+
 #' @export
 #' @rdname checks_df
-rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
+rev_dep_check_tasks_df <- function(path, repos = getOption("repos"), development_only = FALSE) {
   stopifnot(
     "rev_dep_check_tasks_df requires path argument of length 1" = length(path) == 1
     )
@@ -50,16 +57,24 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos")) {
     version = version
   )
   
+  task_specs_function <- if (development_only) {
+    rev_dep_check_tasks_specs_development
+  } else {
+    rev_dep_check_tasks_specs
+  }
+
   df_dev$alias <- paste0(df_dev$alias, " (dev)")
-  df_dev$package <- rev_dep_check_tasks_specs(revdeps, repos, df_dev$alias, "new")
+  df_dev$package <- task_specs_function(revdeps, repos, df_dev$alias, "new")
   df_dev$custom <- rep(list(custom_install_task_spec(
     alias = paste0(package, " (dev)"),
     package = package_spec_source(name = package, path = path),
     type = "source"
   )), times = NROW(df_dev))
   
+  if (development_only) return(df_dev)
+  
   df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
-  df_rel$package <- rev_dep_check_tasks_specs(revdeps, repos, df_rel$alias, "old")
+  df_rel$package <- task_specs_function(revdeps, repos, df_rel$alias, "old")
   df_rel$custom <- rep(list(custom_install_task_spec()), times = NROW(df_dev))
   
   idx <- rep(seq_len(nrow(df_rel)), each = 2) + c(0, nrow(df_rel))
@@ -89,6 +104,24 @@ rev_dep_check_tasks_specs <- function(packages, repos, aliases, revdep) {
   ))
 }
 
+rev_dep_check_tasks_specs_development <- function(packages, repos, aliases, ...) {
+  list_of_task_spec(mapply(
+    function(p, a) {
+      check_task_spec(
+        alias = a,
+        package = package_spec(name = p, repos = repos),
+        env = DEFAULT_R_CMD_CHECK_VARIABLES,
+        args = DEFAULT_CHECK_ARGS,
+        build_args = DEFAULT_BUILD_ARGS
+      )
+    },
+    packages,
+    aliases,
+    SIMPLIFY = FALSE,
+    USE.NAMES = FALSE
+  ))
+}
+
 
 #' @export
 #' @rdname checks_df
@@ -96,7 +129,15 @@ source_check_tasks_df <- function(path) {
   path <- vcapply(path, check_path_is_pkg_source, USE.NAMES = FALSE)
   package <- vcapply(path, get_package_name)
   alias <- if (is.null(names(path))) {
-    paste(package, "(source)")
+    unlist(lapply(unique(package), function(p) {
+      idx <- package == p
+      suffixes <- if (sum(idx) > 1) {
+         paste0("_", seq(sum(idx)))
+      } else {
+        ""
+      }
+      paste0(p, " (source", suffixes, ")")
+    }))
   } else {
     names(path)
   }

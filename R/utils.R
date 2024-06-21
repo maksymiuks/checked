@@ -85,6 +85,10 @@ check_path_is_pkg_source <- function(pkg) {
   normalizePath(pkg, mustWork = TRUE)
 }
 
+is_package <- function(path) {
+  file.exists(file.path(path, "DESCRIPTION"))
+}
+
 check_dependencies <- function(dependencies) {
   is_all <- isTRUE(dependencies)
   is_strong <- length(dependencies) == 1 && is.na(dependencies)

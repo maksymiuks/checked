@@ -1,4 +1,4 @@
-#' Regular Expression for Parsing R CMD check checks
+# Regular Expression for Parsing R CMD check checks
 # nolint start, styler: off
 RE_CHECK <- paste0(
   "(?<=^|\n)",       # starts on a new line (or start of string)
@@ -17,7 +17,8 @@ RE_CHECK <- paste0(
 DEFAULT_R_CMD_CHECK_VARIABLES <- c( # nolint
   "_R_CHECK_FORCE_SUGGESTS_" = FALSE,
   "_R_CHECK_RD_XREFS_" = FALSE,
-  "_R_CHECK_SYSTEM_CLOCK_" = FALSE
+  "_R_CHECK_SYSTEM_CLOCK_" = FALSE,
+  "_R_CHECK_SUGGESTS_ONLY_" = TRUE
 )
 
 DEFAULT_BUILD_ARGS <- c( # nolint
@@ -221,4 +222,19 @@ checks_simplify <- function(x) {
   checks <- trimws(x[, "status"])
   names(checks) <- trimws(x[, "check"])
   checks
+}
+
+#' Message if isolation impossible
+#' 
+#' If _R_CHECK_SUGGESTS_ONLY_ is set to true, R CMD check will isolate package 
+#' installation into temporary directory for running tests and examples. However,
+#' isolation is not applied to dependencies installed in the R_HOME library.
+#' The function informs about possible isolation problem if there are any non
+#' base/recommended packages installed in the .Library (R_HOME).
+message_possible_isolation_problems <- function() {
+  ip_home <- utils::installed.packages(lib.loc = .Library)
+  if (any(is.na(ip_home[, "Priority"]))) {
+    message("Non base/recommended packages identified under R_HOME (.Library) library. ",
+            "Dependencies isolation in the R CMD check might not be fully possible.")
+  }
 }
