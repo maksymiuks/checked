@@ -91,7 +91,6 @@ task_edges_df <- function(df, repos) {
   edges <- drlapply(dependencies, function(p) {
     edges_per_type <- drlapply(uulist(DEP), function(type) {
       deps <- try(db[db[, "Package"] == p, type], silent = TRUE)
-      if (p == "qtlanalysis (source)") browser()
       if (inherits(deps, "try-error") || length(deps) == 0) {
         empty_edge
       } else {

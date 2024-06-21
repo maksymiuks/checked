@@ -7,9 +7,9 @@ checked
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/maksymiuks/cli/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/maksymiuks/cli/actions/workflows/R-CMD-check.yaml)
 [![CRAN](https://img.shields.io/cran/v/checked.svg)](https://cran.r-project.org/package=checked)
-[![coverage](https://img.shields.io/codecov/c/github/maksimiuks/checked/main.svg)](https://app.codecov.io/gh/maksimiuks/checked?branch=main)
+[![coverage](https://img.shields.io/codecov/c/github/maksymiuks/checked/main.svg)](https://app.codecov.io/gh/maksymiuks/checked?branch=main)
 <!-- badges: end -->
 
 # Reverse-dependency Checks
