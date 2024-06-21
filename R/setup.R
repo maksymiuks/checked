@@ -28,8 +28,8 @@ path_logs <- function(path) {
   normalizePath(p)
 }
 
-path_sources <- function(path) {
-  dir_create(p <- file.path(path, "sources"))
+path_sources <- function() {
+  dir_create(p <- file.path(tempdir(), "checked_tmp"))
   normalizePath(p)
 }
 

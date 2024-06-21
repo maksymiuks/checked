@@ -66,8 +66,7 @@ get_package_spec_dependencies.package_spec_source <- function(package_spec) {
 #' @export
 get_package_spec_dependencies.package_spec_archive_source <- function(package_spec) {
   path <- if (!file.exists(package_spec$path)) {
-    dir_create(dir <- file.path(tempdir(), "reversecheck_tmp"))
-    fetch_package_source(package_spec$path, dir)
+    fetch_package_source(package_spec$path, path_sources())
   } else {
     package_spec$path
   }

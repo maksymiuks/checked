@@ -1,6 +1,6 @@
-Package: reversecheck
-Title: Systematically Run R Checks Against Reverse Dependencies
-Version: 1.0.0.9000
+Package: checked
+Title: Systematically Run R CMD Checks
+Version: 1.0.0
 Authors@R:
     c(
       person(
@@ -15,13 +15,15 @@ Authors@R:
         "doug.kelkhoff@gmail.com", 
         role = c("aut"),
         comment = c(ORCID = "0009-0003-7845-4061")
+      ),
+      person(
+      "F. Hoffmann-La Roche AG", 
+      role = c("cph", "fnd")
       )
     )
 Description: 
-    Run R checks against old and new versions of a package to systematically
-    test for any breaking changes imparted on packages which take said package
-    as a dependency (reverse dependencies). Checks are run in parallel with
-    strategies to minimize dependency installation.
+    Systematically Run R checks against multiple packages. Checks are run in 
+    parallel with strategies to minimize dependency installation.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:

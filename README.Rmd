@@ -1,5 +1,5 @@
 ---
-title: reversecheck
+title: checked
 output: github_document
 always_allow_html: yes
 ---
@@ -31,8 +31,8 @@ asciicast::init_knitr_engine(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml)
-[![CRAN](https://img.shields.io/cran/v/reversecheck.svg)](https://cran.r-project.org/package=reversecheck)
-[![coverage](https://img.shields.io/codecov/c/github/maksimiuks/reversecheck/main.svg)](https://app.codecov.io/gh/maksimiuks/reversecheck?branch=main) 
+[![CRAN](https://img.shields.io/cran/v/checked.svg)](https://cran.r-project.org/package=checked)
+[![coverage](https://img.shields.io/codecov/c/github/maksimiuks/checked/main.svg)](https://app.codecov.io/gh/maksimiuks/checked?branch=main) 
 <!-- badges: end -->
 
 
@@ -45,15 +45,15 @@ git clone https://github.com/gaborcsardi/praise /tmp/praise
 ```
 
 ```r
-library(reversecheck)
+library(checked)
 run("/home/dev/praise")
 ```
 ```{asciicast ansi-tty-example, cache = FALSE}
 #| asciicast_knitr_output = "svg",
 #| asciicast_at = "all",
 #| asciicast_cursor = FALSE
-options(reversecheck.tty_tick_interval = 200)
-reversecheck::run("/tmp/praise")
+options(checked.tty_tick_interval = 200)
+checked::run("/tmp/praise")
 cat()
 ```
 

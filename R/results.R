@@ -4,7 +4,7 @@ ISSUES_TYPES <- c("notes", "warnings", "errors")
 #' 
 #' Get R CMD check results
 #' 
-#' @param x \code{\link[reversecheck]{check_design}} object.
+#' @param x \code{\link[checked]{check_design}} object.
 #' @param ... other parameters.
 #' 
 #' @export
@@ -33,7 +33,7 @@ results.check_design <- function(x, ...) {
       )
     }, output = x$output),
     names = classes,
-    class = "reversecheck_results"
+    class = "checked_results"
   )
 }
 
@@ -136,7 +136,7 @@ results.check_task_spec <- function(x, output, ...) {
 }
 
 #' @export
-summary.reversecheck_results <- function(object, ...) {
+summary.checked_results <- function(object, ...) {
   lapply(object, summary)
 }
 
@@ -156,7 +156,7 @@ summary.results_check_task_spec <- function(object, ...) {
 }
 
 #' @export
-print.reversecheck_results <- function(x, ...) {
+print.checked_results <- function(x, ...) {
   for (i in seq_along(x)) {
     cat("#", tools::toTitleCase(strsplit(names(x)[i], "_")[[1]]), "\n\n")
     print(x[[i]])

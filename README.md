@@ -1,4 +1,4 @@
-reversecheck
+checked
 ================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -8,14 +8,14 @@ reversecheck
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/maksimiuk/cli/actions/workflows/R-CMD-check.yaml)
-[![CRAN](https://img.shields.io/cran/v/reversecheck.svg)](https://cran.r-project.org/package=reversecheck)
-[![coverage](https://img.shields.io/codecov/c/github/maksimiuks/reversecheck/main.svg)](https://app.codecov.io/gh/maksimiuks/reversecheck?branch=main)
+[![CRAN](https://img.shields.io/cran/v/checked.svg)](https://cran.r-project.org/package=checked)
+[![coverage](https://img.shields.io/codecov/c/github/maksimiuks/checked/main.svg)](https://app.codecov.io/gh/maksimiuks/checked?branch=main)
 <!-- badges: end -->
 
 # Reverse-dependency Checks
 
 ``` r
-library(reversecheck)
+library(checked)
 run("/home/dev/praise")
 ```
 

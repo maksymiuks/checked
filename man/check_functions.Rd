@@ -76,8 +76,8 @@ most expressive command-line reporter given your terminal capabilities.}
 \item{...}{other parameters}
 }
 \value{
-\code{\link[reversecheck]{check_design}} R6 class storing all the details
-regarding checks that run. Can be combined with \code{\link[reversecheck]{results}}
+\code{\link[checked]{check_design}} R6 class storing all the details
+regarding checks that run. Can be combined with \code{\link[checked]{results}}
 and \code{summary} methods to generate results.
 }
 \description{

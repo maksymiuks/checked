@@ -2,7 +2,7 @@
 #'
 #' Create data.frame which each row defines a package for which R CMD check 
 #' should be run. Such data.frame is a prerequisite for generating 
-#' \code{\link[reversecheck]{check_design}} which orchestrates all the processes
+#' \code{\link[checked]{check_design}} which orchestrates all the processes
 #' including dependencies installation.
 #' 
 #' @param path path to the package source. See Details.
@@ -30,9 +30,9 @@
 #' \item \code{alias} The alias of the check to run. It also serves the purpose of u
 #' unique identifier and node name in the task graph.
 #' \item \code{version} Version of the package to be checked.
-#' \item \code{package} Object that inherits from \code{\link[reversecheck]{check_task_spec}}.
+#' \item \code{package} Object that inherits from \code{\link[checked]{check_task_spec}}.
 #' Defines how package to be checked can be acquired.
-#' \item \code{custom}  Object that inherits from \code{\link[reversecheck]{custom_install_task_spec}}. 
+#' \item \code{custom}  Object that inherits from \code{\link[checked]{custom_install_task_spec}}. 
 #' Defines custom package, for instance only available from local source, that 
 #' should be installed before checking the package.
 #' }

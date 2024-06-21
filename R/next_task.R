@@ -77,7 +77,7 @@ start_task.custom_install_task_spec <- function(task, g, output, lib.loc, ...) {
 start_task.check_task_spec <- function(task, g, output, lib.loc, ...) {
   spec <- task_graph_task_spec(g, task)
   libpaths <- c(task_get_lib_loc(g, task, output), lib.loc)
-  path <- check_path(spec$package_spec, output = path_sources(output))
+  path <- check_path(spec$package_spec, output = path_sources())
 
   check_process$new(
     path = path,

@@ -41,8 +41,8 @@
 #' and passes them to the \code{check_packages}
 #' 
 #' @return 
-#' \code{\link[reversecheck]{check_design}} R6 class storing all the details
-#' regarding checks that run. Can be combined with \code{\link[reversecheck]{results}}
+#' \code{\link[checked]{check_design}} R6 class storing all the details
+#' regarding checks that run. Can be combined with \code{\link[checked]{results}}
 #' and \code{summary} methods to generate results.
 #' 
 #' @name check_functions
