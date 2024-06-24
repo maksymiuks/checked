@@ -25,6 +25,9 @@
     <loc>/reference/check_functions.html</loc>
   </url>
   <url>
+    <loc>/reference/checked-package.html</loc>
+  </url>
+  <url>
     <loc>/reference/checks_capture.html</loc>
   </url>
   <url>
@@ -50,9 +53,6 @@
   </url>
   <url>
     <loc>/reference/results.html</loc>
-  </url>
-  <url>
-    <loc>/reference/reversecheck-package.html</loc>
   </url>
   <url>
     <loc>/reference/run.html</loc>
