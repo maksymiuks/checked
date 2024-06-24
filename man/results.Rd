@@ -10,7 +10,7 @@ results(x, ...)
 \method{results}{check_design}(x, ...)
 }
 \arguments{
-\item{x}{\code{\link[reversecheck]{check_design}} object.}
+\item{x}{\code{\link[checked]{check_design}} object.}
 
 \item{...}{other parameters.}
 }

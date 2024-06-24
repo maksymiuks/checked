@@ -2,7 +2,7 @@
 #'
 #' Create data.frame which each row defines a package for which R CMD check 
 #' should be run. Such data.frame is a prerequisite for generating 
-#' \code{\link[reversecheck]{check_design}} which orchestrates all the processes
+#' \code{\link[checked]{check_design}} which orchestrates all the processes
 #' including dependencies installation.
 #' 
 #' @param path path to the package source. See Details.
@@ -30,9 +30,9 @@
 #' \item \code{alias} The alias of the check to run. It also serves the purpose of u
 #' unique identifier and node name in the task graph.
 #' \item \code{version} Version of the package to be checked.
-#' \item \code{package} Object that inherits from \code{\link[reversecheck]{check_task_spec}}.
+#' \item \code{package} Object that inherits from \code{\link[checked]{check_task_spec}}.
 #' Defines how package to be checked can be acquired.
-#' \item \code{custom}  Object that inherits from \code{\link[reversecheck]{custom_install_task_spec}}. 
+#' \item \code{custom}  Object that inherits from \code{\link[checked]{custom_install_task_spec}}. 
 #' Defines custom package, for instance only available from local source, that 
 #' should be installed before checking the package.
 #' }
@@ -50,7 +50,7 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos"), development
   path <- check_path_is_pkg_source(path)
   package <- get_package_name(path)
   package_v <- ap[package, "Version"]
-  revdeps <- tools::package_dependencies(package, reverse = TRUE, db = ap)[[1]]
+  revdeps <- tools::package_dependencies(package, which = "all", reverse = TRUE, db = ap)[[1]]
   version <- ap[revdeps, "Version"]
   df_dev <- df_rel <- data.frame(
     alias = revdeps,
@@ -71,7 +71,11 @@ rev_dep_check_tasks_df <- function(path, repos = getOption("repos"), development
     type = "source"
   )), times = NROW(df_dev))
   
-  if (development_only) return(df_dev)
+  if (development_only) {
+    df_dev$package <- list_of_task_spec(df_dev$package)
+    df_dev$custom <- list_of_task_spec(df_dev$custom)
+    return(df_dev)
+  }
   
   df_rel$alias <- paste0(df_rel$alias, " (v", package_v, ")")
   df_rel$package <- task_specs_function(revdeps, repos, df_rel$alias, "old")
@@ -126,9 +130,10 @@ rev_dep_check_tasks_specs_development <- function(packages, repos, aliases, ...)
 #' @export
 #' @rdname checks_df
 source_check_tasks_df <- function(path) {
+  name <- names(path)
   path <- vcapply(path, check_path_is_pkg_source, USE.NAMES = FALSE)
   package <- vcapply(path, get_package_name)
-  alias <- if (is.null(names(path))) {
+  alias <- if (is.null(name)) {
     unlist(lapply(unique(package), function(p) {
       idx <- package == p
       suffixes <- if (sum(idx) > 1) {
@@ -139,7 +144,7 @@ source_check_tasks_df <- function(path) {
       paste0(p, " (source", suffixes, ")")
     }))
   } else {
-    names(path)
+    name
   }
   version <- vcapply(path, get_package_version)
   
@@ -148,8 +153,12 @@ source_check_tasks_df <- function(path) {
     version = version
   )
   
-  df$package <- source_check_tasks_specs(package, path, alias)
-  df$custom <- rep(list(custom_install_task_spec()), times = NROW(df))
+  df$package <- list_of_task_spec(
+    source_check_tasks_specs(package, path, alias)
+  )
+  df$custom <- list_of_task_spec(
+    rep(list(custom_install_task_spec()), times = NROW(df))
+  )
   
   df
 }

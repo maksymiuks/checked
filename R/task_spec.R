@@ -4,7 +4,7 @@
 #' to run specific task.
 #' 
 #' @param alias task alias which also serves as unique identifier of the task.
-#' @param package_spec \code{\link[reversecheck]{package_spec}} object
+#' @param package_spec \code{\link[checked]{package_spec}} object
 #' @param env environmental variables to be set in separate process running 
 #' specific task.
 #' @param revdep character indicating whether the task specification describes

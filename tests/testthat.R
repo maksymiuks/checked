@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(reversecheck)
+library(checked)
 
-test_check("reversecheck")
+test_check("checked")
