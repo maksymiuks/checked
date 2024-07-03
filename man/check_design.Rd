@@ -8,6 +8,7 @@ Abstract object that drives all separate processes required to run
 R CMD check sequence.
 }
 \examples{
+\dontrun{
 library(checked)
 df <- source_check_tasks_df(c(
  system.file("exampleBad", package = "checked"),
@@ -18,7 +19,7 @@ plan <- check_design$new(df, n = 10, repos = "https://cran.r-project.org/")
 while (!plan$is_done()) {
  plan$start_next_task()
 }
-
+}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

@@ -24,7 +24,7 @@ run.check_design <- function(design, ..., reporter = default_reporter()) {
   })
 
   report_initialize(reporter, design)
-  while (design$step()) {
+  while (design$start_next_task() >= 0) {
     report_status(reporter, design)
     report_sleep(reporter, design)
   }

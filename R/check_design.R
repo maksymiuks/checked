@@ -14,6 +14,7 @@ new_rev_dep_check_design <- function(x, ...) {
 #' R CMD check sequence.
 #' 
 #' @examples
+#' \dontrun{
 #' library(checked)
 #' df <- source_check_tasks_df(c(
 #'  system.file("exampleBad", package = "checked"),
@@ -24,7 +25,7 @@ new_rev_dep_check_design <- function(x, ...) {
 #' while (!plan$is_done()) {
 #'  plan$start_next_task()
 #' }
-#'
+#'}
 #' @export
 check_design <- R6::R6Class(
   "check_design",

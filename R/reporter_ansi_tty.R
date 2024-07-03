@@ -130,6 +130,8 @@ report_status.reporter_ansi_tty <- function(reporter, design, envir) { # nolint
     width <- cli::console_width() - n_char_titles - 2L
     task_name <- v_checks$name[[v_idx]]
     process <- task_graph_task_process(design$graph, v_checks[[v_idx]])
+    # If the check was restored it does not have process associated with it.
+    if (is.null(process)) next()
 
     # report status line
     buffer <- paste0(
