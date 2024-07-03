@@ -8,20 +8,16 @@ Abstract object that drives all separate processes required to run
 R CMD check sequence.
 }
 \examples{
-# TODO: Make these tests agnostic (right now they are dependent on local file system)
-# I guess we can bundle some mock packages in tests directory that take a few
-# cran packages as dependencies and use source_check_tasks_df to demonstrate plan
+library(checked)
+df <- source_check_tasks_df(c(
+ system.file("exampleBad", package = "checked"),
+ system.file("exampleGood", package = "checked")
+))
 
-# df <- rev_dep_check_tasks_df(
-#     "~/Desktop/validation/code/DALEX/", 
-#     repos = "https://cran.r-project.org/"
-# )
-# plan <- check_design$new(df, n = 20, repos = "https://cran.r-project.org/")
-# plan
-# while (!plan$is_done()) {
-#  print(table(igraph::vertex.attributes(plan$graph)$status |> as.character()))
-#  plan$start_next_task()
-# }
+plan <- check_design$new(df, n = 10, repos = "https://cran.r-project.org/")
+while (!plan$is_done()) {
+ plan$start_next_task()
+}
 
 }
 \section{Public fields}{

@@ -14,8 +14,8 @@ default_reporter <- function() {
   if (cli::is_ansi_tty()) {
     reporter("ansi_tty")
   } else if (cli::is_dynamic_tty()) {
-    stop("dynamic tty reporter not yet available")
-    reporter("dynamic_tty")
+    message("dynamic tty reporter not yet available")
+    reporter("basic_tty")
   } else {
     reporter("basic_tty")
   }

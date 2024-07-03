@@ -27,7 +27,7 @@ report_status.reporter_basic_tty <- function(reporter, design, envir) { # nolint
     if (node$status <= STATUS$`pending`) next
 
     # NOTE: for some reason check process never finishes unless we poll checks
-    if (node$type == "check") node$process$poll_output()
+    if (node$type == "check" && !is.null(node$process)) node$process$poll_output()
 
     # report stating of new checks
     if (!identical(node$status, reporter$statuses[[node$name]])) {
@@ -35,25 +35,29 @@ report_status.reporter_basic_tty <- function(reporter, design, envir) { # nolint
         "pending" = "queued",
         "in progress" = cli::cli_fmt(cli::cli_text("started")),
         "done" = {
-          dur <- if (!is.null(node$process$get_duration)) {
-            node$process$get_duration()
-          }
-          if (node$type == "check") {
-            ewn <- c("ERROR", "WARNING", "NOTE")
-            ewn <- table(node$process$get_checks())[ewn]
+          if (is.null(node$process)) {
+            cli::cli_fmt(cli::cli_text("finished (restored)"))
           } else {
-            ewn <- c(0, 0, 0)
+            dur <- if (!is.null(node$process$get_duration)) {
+              node$process$get_duration()
+            }
+            if (node$type == "check") {
+              ewn <- c("ERROR", "WARNING", "NOTE")
+              ewn <- table(node$process$get_checks())[ewn]
+            } else {
+              ewn <- c(0, 0, 0)
+            }
+            cli::cli_fmt(cli::cli_text(
+              "finished",
+              if (sum(ewn) > 0) " with ",
+              paste(collapse = ", ", c(
+                if (ewn[[1]] > 0) cli::format_inline("{.err {ewn[[1]]} ERROR{?/S}}"),
+                if (ewn[[2]] > 0) cli::format_inline("{.warn {ewn[[2]]} WARNING{?/S}}"),
+                if (ewn[[3]] > 0) cli::format_inline("{.note {ewn[[3]]} NOTE{?/S}}")
+              )),
+              if (!is.null(dur)) cli::format_inline(" {.time_taken ({format_time(dur)})}")
+            ))
           }
-          cli::cli_fmt(cli::cli_text(
-            "finished",
-            if (sum(ewn) > 0) " with ",
-            paste(collapse = ", ", c(
-              if (ewn[[1]] > 0) cli::format_inline("{.err {ewn[[1]]} ERROR{?/S}}"),
-              if (ewn[[2]] > 0) cli::format_inline("{.warn {ewn[[2]]} WARNING{?/S}}"),
-              if (ewn[[3]] > 0) cli::format_inline("{.note {ewn[[3]]} NOTE{?/S}}")
-            )),
-            if (!is.null(dur)) cli::format_inline(" {.time_taken ({format_time(dur)})}")
-          ))
         }
       )
 
