@@ -13,6 +13,10 @@
 #' checking packages, defaults to entire .libPaths().
 #' @param repos character vector of repositories which will be used when
 #' generating task graph and later pulling dependencies.
+#' @param reverse_repos character vector of repositories which will be used
+#' to pull sources for reverse dependencies. In some cases, for instance using
+#' binaries on Linux, we want to use different repositories when pulling sources
+#' to check and different when installing dependencies.
 #' @param restore logical value, whether output directory should be unlinked
 #' before running checks. If FALSE, an attempt will me made to restore previous
 #' progress from the same \code{output}
@@ -56,11 +60,12 @@ check_reverse_dependencies <- function(
     output = tempfile(paste(utils::packageName(), Sys.Date(), sep = "-")),
     lib.loc = .libPaths(),
     repos = getOption("repos"),
+    reverse_repos = repos,
     restore = TRUE,
     reporter = default_reporter(),
     ...
 ) {
-  checks <- rev_dep_check_tasks_df(path = path, repos = repos)
+  checks <- rev_dep_check_tasks_df(path = path, repos = reverse_repos)
   
   plan <- check_design$new(
     checks,

@@ -14,6 +14,7 @@ check_reverse_dependencies(
   output = tempfile(paste(utils::packageName(), Sys.Date(), sep = "-")),
   lib.loc = .libPaths(),
   repos = getOption("repos"),
+  reverse_repos = repos,
   restore = TRUE,
   reporter = default_reporter(),
   ...
@@ -65,6 +66,11 @@ checking packages, defaults to entire .libPaths().}
 
 \item{repos}{character vector of repositories which will be used when
 generating task graph and later pulling dependencies.}
+
+\item{reverse_repos}{character vector of repositories which will be used
+to pull sources for reverse dependencies. In some cases, for instance using
+binaries on Linux, we want to use different repositories when pulling sources
+to check and different when installing dependencies.}
 
 \item{restore}{logical value, whether output directory should be unlinked
 before running checks. If FALSE, an attempt will me made to restore previous

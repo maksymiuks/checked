@@ -94,7 +94,7 @@ rev_dep_check_tasks_specs <- function(packages, repos, aliases, revdep) {
     function(p, a) {
       revdep_check_task_spec(
         alias = a,
-        package = package_spec(name = p, repos = repos),
+        package_spec = package_spec(name = p, repos = repos),
         env = DEFAULT_R_CMD_CHECK_VARIABLES,
         args = DEFAULT_CHECK_ARGS,
         build_args = DEFAULT_BUILD_ARGS,
@@ -113,7 +113,7 @@ rev_dep_check_tasks_specs_development <- function(packages, repos, aliases, ...)
     function(p, a) {
       check_task_spec(
         alias = a,
-        package = package_spec(name = p, repos = repos),
+        package_spec = package_spec(name = p, repos = repos),
         env = DEFAULT_R_CMD_CHECK_VARIABLES,
         args = DEFAULT_CHECK_ARGS,
         build_args = DEFAULT_BUILD_ARGS
@@ -169,7 +169,7 @@ source_check_tasks_specs <- function(packages, path, aliases) {
     function(p, path, a) {
       check_task_spec(
         alias = a,
-        package = package_spec_source(name = p, path = path, repos = NULL),
+        package_spec = package_spec_source(name = p, path = path, repos = NULL),
         env = DEFAULT_R_CMD_CHECK_VARIABLES,
         args = DEFAULT_CHECK_ARGS,
         build_args = DEFAULT_BUILD_ARGS

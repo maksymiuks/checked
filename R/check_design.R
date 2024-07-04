@@ -14,21 +14,18 @@ new_rev_dep_check_design <- function(x, ...) {
 #' R CMD check sequence.
 #' 
 #' @examples
-#' # TODO: Make these tests agnostic (right now they are dependent on local file system)
-#' # I guess we can bundle some mock packages in tests directory that take a few
-#' # cran packages as dependencies and use source_check_tasks_df to demonstrate plan
+#' \dontrun{
+#' library(checked)
+#' df <- source_check_tasks_df(c(
+#'  system.file("exampleBad", package = "checked"),
+#'  system.file("exampleGood", package = "checked")
+#' ))
 #' 
-#' # df <- rev_dep_check_tasks_df(
-#' #     "~/Desktop/validation/code/DALEX/", 
-#' #     repos = "https://cran.r-project.org/"
-#' # )
-#' # plan <- check_design$new(df, n = 20, repos = "https://cran.r-project.org/")
-#' # plan
-#' # while (!plan$is_done()) {
-#' #  print(table(igraph::vertex.attributes(plan$graph)$status |> as.character()))
-#' #  plan$start_next_task()
-#' # }
-#'
+#' plan <- check_design$new(df, n = 10, repos = "https://cran.r-project.org/")
+#' while (!plan$is_done()) {
+#'  plan$start_next_task()
+#' }
+#'}
 #' @export
 check_design <- R6::R6Class(
   "check_design",
@@ -87,6 +84,7 @@ check_design <- R6::R6Class(
       message_possible_isolation_problems()
       
       if (!restore) unlink(output, recursive = TRUE, force = TRUE)
+      
       self$input <- df
       self$output <- output
       private$n <- n
@@ -133,6 +131,10 @@ check_design <- R6::R6Class(
         if (!process$is_alive()) {
           process$finalize()
         }
+      }
+      
+      if (self$is_done()) {
+        return(-1L)
       }
 
       # if all available processes are in use, terminate early
@@ -202,7 +204,8 @@ check_design <- R6::R6Class(
     #' 
     #' Checks whether all the scheduled tasks were successfully executed.
     is_done = function() {
-      all(igraph::vertex.attributes(self$graph)$status == STATUS$done)
+      checks <- igraph::V(self$graph)[igraph::V(self$graph)$type == "check"]
+      all(checks$status == STATUS$done)
     },
     #' @description
     #' Restore complete checks
