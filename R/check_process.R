@@ -235,6 +235,6 @@ message_possible_isolation_problems <- function() {
   ip_home <- utils::installed.packages(lib.loc = .Library)
   if (any(is.na(ip_home[, "Priority"]))) {
     message("Non-standard packages identified under R_HOME (.Library) library. ",
-            "Dependencies isolation while R CMD check might not be possible.")
+            "R CMD check might not be able to isolate dependencies while running.")
   }
 }
