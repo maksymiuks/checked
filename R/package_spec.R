@@ -82,7 +82,7 @@ install_parameters <- function(package_spec) {
 
 #' @export
 install_parameters.package_spec <- function(package_spec) {
-  list(package = package_spec$name, repos = package_spec$repo)
+  list(package = package_spec$name, repos = package_spec$repos)
 }
 
 #' @export
@@ -101,7 +101,7 @@ check_path <- function(package_spec, ...) {
 
 #' @export
 check_path.package_spec <- function(package_spec, output, ...) {
-  get_package_source(package_spec$name, package_spec$repo, destdir = output)
+  get_package_source(package_spec$name, package_spec$repos, destdir = output)
 }
 
 #' @export
