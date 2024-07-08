@@ -11,7 +11,8 @@ install_packages_process <- R6::R6Class(
         args = list(pkgs, ..., lib = lib),
         libpath = libpaths,
         stdout = log,
-        stderr = "2>&1"
+        stderr = "2>&1",
+        system_profile = TRUE
       )
     },
     get_duration = function() {
