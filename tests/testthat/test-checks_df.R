@@ -51,14 +51,15 @@ test_that("rev_dep_check_tasks_df development_only = TRUE", {
 })
 
 test_that("source_check_tasks_df works as expected", {
+  examples_path <- system.file("example_packages", package = "checked")
   expect_silent(
     df <- source_check_tasks_df(
       c(
         test_path("testing_pkgs", "DALEXtra"),
         test_path("testing_pkgs", "rd2markdown"),
-        test_path("testing_pkgs", "exampleGood"),
-        test_path("testing_pkgs", "exampleOkay"),
-        test_path("testing_pkgs", "exampleBad")
+        file.path(examples_path, "exampleGood"),
+        file.path(examples_path, "exampleOkay"),
+        file.path(examples_path, "exampleBad")
       )
     )
   )
@@ -78,13 +79,14 @@ test_that("source_check_tasks_df works as expected", {
 })
 
 test_that("source_check_tasks_df aliases are properly handled", {
+  examples_path <- system.file("example_packages", package = "checked")
   names <- c("DALEXtra_new", "rd2markdown_new", "exampleGood_new", "exampleOkay_new", "exampleBad_new")
   path <- c(
     test_path("testing_pkgs", "DALEXtra"),
     test_path("testing_pkgs", "rd2markdown"),
-    test_path("testing_pkgs", "exampleGood"),
-    test_path("testing_pkgs", "exampleOkay"),
-    test_path("testing_pkgs", "exampleBad")
+    file.path(examples_path, "exampleGood"),
+    file.path(examples_path, "exampleOkay"),
+    file.path(examples_path, "exampleBad")
   )
   names(path) <- names
   
@@ -97,9 +99,9 @@ test_that("source_check_tasks_df aliases are properly handled", {
 
   expect_silent(
     df <- source_check_tasks_df(c(
-      test_path("testing_pkgs", "exampleGood"),
-      test_path("testing_pkgs", "exampleGood"),
-      test_path("testing_pkgs", "exampleGood")
+      file.path(examples_path, "exampleGood"),
+      file.path(examples_path, "exampleGood"),
+      file.path(examples_path, "exampleGood")
     ))
   )
   

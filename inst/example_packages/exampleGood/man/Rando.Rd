@@ -21,12 +21,12 @@ An example R6 Rando class using an active field
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-clone}{\code{Rando$clone()}}
+\item \href{#method-Rando-clone}{\code{Rando$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Rando-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Rando-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

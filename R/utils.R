@@ -44,8 +44,7 @@ DB_COLNAMES <- c(
 )
 
 base_pkgs <- function() {
-  ip <- utils::installed.packages()
-  c("R", ip[!is.na(ip[, "Priority"]) & ip[, "Priority"] == "base", "Package"])
+  c("R", utils::installed.packages(priority = "base")[, "Package"])
 }
 
 .tools <- as.list(getNamespace("tools"), all.names = TRUE)[c(

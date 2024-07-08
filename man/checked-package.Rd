@@ -5,9 +5,9 @@
 \alias{checked-package}
 \title{checked: Systematically Run R CMD Checks}
 \description{
-Systematically Run R checks against multiple packages. Checks are run in parallel with strategies to minimize dependency installation. Provides out of the box interface for running reverse dependecy check.
+Systematically Run R checks against multiple packages. Checks are run in parallel with strategies to minimize dependency installation. Provides out of the box interface for running reverse dependency check.
 
-Systematically Run R checks against multiple packages. Checks are run in parallel with strategies to minimize dependency installation. Provides out of the box interface for running reverse dependecy check.
+Systematically Run R checks against multiple packages. Checks are run in parallel with strategies to minimize dependency installation. Provides out of the box interface for running reverse dependency check.
 }
 \author{
 \strong{Maintainer}: Szymon Maksymiuk \email{sz.maksymiuk@gmail.com} (\href{https://orcid.org/0000-0002-3120-1601}{ORCID})

@@ -7,7 +7,7 @@ install_packages_process <- R6::R6Class(
     initialize = function(pkgs, ..., lib = .libPaths(), libpaths = .libPaths(), log) {
       private$package <- pkgs
       private$callr_r_bg(
-        function(...) install.packages(...),
+        function(...) utils::install.packages(...),
         args = list(pkgs, ..., lib = lib),
         libpath = libpaths,
         stdout = log,
