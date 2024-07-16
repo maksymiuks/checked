@@ -11,8 +11,8 @@ R CMD check sequence.
 \dontrun{
 library(checked)
 df <- source_check_tasks_df(c(
- system.file("exampleBad", package = "checked"),
- system.file("exampleGood", package = "checked")
+ system.file("example_packages", "exampleBad", package = "checked"),
+ system.file("example_packages", "exampleGood", package = "checked")
 ))
 
 plan <- check_design$new(df, n = 10, repos = "https://cran.r-project.org/")

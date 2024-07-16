@@ -1,3 +1,3 @@
 checked 0.1.0
 ---------------------------------------------------------------
-* Package release to CRAN
+* Package released to CRAN

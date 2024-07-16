@@ -147,16 +147,6 @@ check_process <- R6::R6Class(
 #'   returns a logical value indicating whether the throttle interval has
 #'   passed (TRUE if the interval has not yet passed).
 #'
-#' @examples
-#' # TODO: Internal (non-exported) functions cannot be used in examples
-#' # my_throttle <- throttle(0.5)
-#'
-#' # Sys.sleep(0.1)
-#' # my_throttle()
-#'
-#' # Sys.sleep(0.5)
-#' # my_throttle()
-#'
 throttle <- function(interval = 0.2) {
   e <- environment()
   e$since <- Sys.time()

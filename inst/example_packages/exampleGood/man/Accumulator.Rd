@@ -21,14 +21,14 @@ An example R6 Accumulator class
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Accumulator$new()}}
-\item \href{#method-add}{\code{Accumulator$add()}}
-\item \href{#method-clone}{\code{Accumulator$clone()}}
+\item \href{#method-Accumulator-new}{\code{Accumulator$new()}}
+\item \href{#method-Accumulator-add}{\code{Accumulator$add()}}
+\item \href{#method-Accumulator-clone}{\code{Accumulator$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Accumulator-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Accumulator-new}{}}}
 \subsection{Method \code{new()}}{
 Create a new Accumulator
 \subsection{Usage}{
@@ -47,8 +47,8 @@ A new \code{Accumulator} object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add"></a>}}
-\if{latex}{\out{\hypertarget{method-add}{}}}
+\if{html}{\out{<a id="method-Accumulator-add"></a>}}
+\if{latex}{\out{\hypertarget{method-Accumulator-add}{}}}
 \subsection{Method \code{add()}}{
 Add to the accumulating sum
 \subsection{Usage}{
@@ -67,8 +67,8 @@ The \code{Accumulator} object after accumulating the new value
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Accumulator-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Accumulator-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

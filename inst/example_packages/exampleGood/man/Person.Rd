@@ -14,14 +14,14 @@ An example R6 Person class with public and private fields/methods
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Person$new()}}
-\item \href{#method-print}{\code{Person$print()}}
-\item \href{#method-clone}{\code{Person$clone()}}
+\item \href{#method-Person-new}{\code{Person$new()}}
+\item \href{#method-Person-print}{\code{Person$print()}}
+\item \href{#method-Person-clone}{\code{Person$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Person-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Person-new}{}}}
 \subsection{Method \code{new()}}{
 Create a new Person
 \subsection{Usage}{
@@ -39,8 +39,8 @@ Create a new Person
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-Person-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Person-print}{}}}
 \subsection{Method \code{print()}}{
 Print a Person objects info
 \subsection{Usage}{
@@ -56,8 +56,8 @@ Print a Person objects info
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Person-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Person-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{
